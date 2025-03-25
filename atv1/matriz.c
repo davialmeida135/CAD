@@ -4,7 +4,7 @@
 
 void main(){
     // Input do tamanho da matriz
-    int n = 1000;
+    int n = 1200;
     
     // Construção da matriz 
     int matriz[n][n];
