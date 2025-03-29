@@ -1,0 +1,338 @@
+Starting Matrix-Vector Multiplication Benchmark (Integers)
+===================================================================
+Testing n = 32 (Matrix 1024 elements, Vector 32 elements)
+  Data Size: Matrix=0.00 MB, Vectors(x2)=0.00 MB, Total=0.00 MB
+  Initializing data...
+  Initialization complete.
+  Performing warm-up run...
+  Warm-up complete.
+  Performing 50 timed repetitions...
+  Timing complete.
+  Repetitions: 50
+  Total time for 50 runs: 0.000034 seconds
+  Average time per run: 0.000000682 seconds
+  Performance: 3.003 GIOPS (Billion Integer Operations per Second)
+===================================================================
+===================================================================
+Testing n = 64 (Matrix 4096 elements, Vector 64 elements)
+  Data Size: Matrix=0.02 MB, Vectors(x2)=0.00 MB, Total=0.02 MB
+  Initializing data...
+  Initialization complete.
+  Performing warm-up run...
+  Warm-up complete.
+  Performing 50 timed repetitions...
+  Timing complete.
+  Repetitions: 50
+  Total time for 50 runs: 0.000119 seconds
+  Average time per run: 0.000002379 seconds
+  Performance: 3.443 GIOPS (Billion Integer Operations per Second)
+===================================================================
+===================================================================
+Testing n = 80 (Matrix 6400 elements, Vector 80 elements)
+  Data Size: Matrix=0.02 MB, Vectors(x2)=0.00 MB, Total=0.03 MB
+  Initializing data...
+  Initialization complete.
+  Performing warm-up run...
+  Warm-up complete.
+  Performing 50 timed repetitions...
+  Timing complete.
+  Repetitions: 50
+  Total time for 50 runs: 0.000183 seconds
+  Average time per run: 0.000003662 seconds
+  Performance: 3.495 GIOPS (Billion Integer Operations per Second)
+===================================================================
+===================================================================
+Testing n = 88 (Matrix 7744 elements, Vector 88 elements)
+  Data Size: Matrix=0.03 MB, Vectors(x2)=0.00 MB, Total=0.03 MB
+  Initializing data...
+  Initialization complete.
+  Performing warm-up run...
+  Warm-up complete.
+  Performing 50 timed repetitions...
+  Timing complete.
+  Repetitions: 50
+  Total time for 50 runs: 0.000219 seconds
+  Average time per run: 0.000004382 seconds
+  Performance: 3.534 GIOPS (Billion Integer Operations per Second)
+===================================================================
+===================================================================
+Testing n = 96 (Matrix 9216 elements, Vector 96 elements)
+  Data Size: Matrix=0.04 MB, Vectors(x2)=0.00 MB, Total=0.04 MB
+  Initializing data...
+  Initialization complete.
+  Performing warm-up run...
+  Warm-up complete.
+  Performing 50 timed repetitions...
+  Timing complete.
+  Repetitions: 50
+  Total time for 50 runs: 0.000311 seconds
+  Average time per run: 0.000006223 seconds
+  Performance: 2.962 GIOPS (Billion Integer Operations per Second)
+===================================================================
+===================================================================
+Testing n = 112 (Matrix 12544 elements, Vector 112 elements)
+  Data Size: Matrix=0.05 MB, Vectors(x2)=0.00 MB, Total=0.05 MB
+  Initializing data...
+  Initialization complete.
+  Performing warm-up run...
+  Warm-up complete.
+  Performing 50 timed repetitions...
+  Timing complete.
+  Repetitions: 50
+  Total time for 50 runs: 0.000368 seconds
+  Average time per run: 0.000007362 seconds
+  Performance: 3.408 GIOPS (Billion Integer Operations per Second)
+===================================================================
+===================================================================
+Testing n = 128 (Matrix 16384 elements, Vector 128 elements)
+  Data Size: Matrix=0.06 MB, Vectors(x2)=0.00 MB, Total=0.06 MB
+  Initializing data...
+  Initialization complete.
+  Performing warm-up run...
+  Warm-up complete.
+  Performing 50 timed repetitions...
+  Timing complete.
+  Repetitions: 50
+  Total time for 50 runs: 0.000734 seconds
+  Average time per run: 0.000014677 seconds
+  Performance: 2.233 GIOPS (Billion Integer Operations per Second)
+===================================================================
+===================================================================
+Testing n = 192 (Matrix 36864 elements, Vector 192 elements)
+  Data Size: Matrix=0.14 MB, Vectors(x2)=0.00 MB, Total=0.14 MB
+  Initializing data...
+  Initialization complete.
+  Performing warm-up run...
+  Warm-up complete.
+  Performing 50 timed repetitions...
+  Timing complete.
+  Repetitions: 50
+  Total time for 50 runs: 0.001824 seconds
+  Average time per run: 0.000036483 seconds
+  Performance: 2.021 GIOPS (Billion Integer Operations per Second)
+===================================================================
+===================================================================
+Testing n = 224 (Matrix 50176 elements, Vector 224 elements)
+  Data Size: Matrix=0.19 MB, Vectors(x2)=0.00 MB, Total=0.19 MB
+  Initializing data...
+  Initialization complete.
+  Performing warm-up run...
+  Warm-up complete.
+  Performing 20 timed repetitions...
+  Timing complete.
+  Repetitions: 20
+  Total time for 20 runs: 0.000548 seconds
+  Average time per run: 0.000027394 seconds
+  Performance: 3.663 GIOPS (Billion Integer Operations per Second)
+===================================================================
+===================================================================
+Testing n = 240 (Matrix 57600 elements, Vector 240 elements)
+  Data Size: Matrix=0.22 MB, Vectors(x2)=0.00 MB, Total=0.22 MB
+  Initializing data...
+  Initialization complete.
+  Performing warm-up run...
+  Warm-up complete.
+  Performing 20 timed repetitions...
+  Timing complete.
+  Repetitions: 20
+  Total time for 20 runs: 0.000636 seconds
+  Average time per run: 0.000031793 seconds
+  Performance: 3.623 GIOPS (Billion Integer Operations per Second)
+===================================================================
+===================================================================
+Testing n = 256 (Matrix 65536 elements, Vector 256 elements)
+  Data Size: Matrix=0.25 MB, Vectors(x2)=0.00 MB, Total=0.25 MB
+  Initializing data...
+  Initialization complete.
+  Performing warm-up run...
+  Warm-up complete.
+  Performing 20 timed repetitions...
+  Timing complete.
+  Repetitions: 20
+  Total time for 20 runs: 0.001466 seconds
+  Average time per run: 0.000073302 seconds
+  Performance: 1.788 GIOPS (Billion Integer Operations per Second)
+===================================================================
+===================================================================
+Testing n = 272 (Matrix 73984 elements, Vector 272 elements)
+  Data Size: Matrix=0.28 MB, Vectors(x2)=0.00 MB, Total=0.28 MB
+  Initializing data...
+  Initialization complete.
+  Performing warm-up run...
+  Warm-up complete.
+  Performing 20 timed repetitions...
+  Timing complete.
+  Repetitions: 20
+  Total time for 20 runs: 0.000903 seconds
+  Average time per run: 0.000045156 seconds
+  Performance: 3.277 GIOPS (Billion Integer Operations per Second)
+===================================================================
+===================================================================
+Testing n = 384 (Matrix 147456 elements, Vector 384 elements)
+  Data Size: Matrix=0.56 MB, Vectors(x2)=0.00 MB, Total=0.57 MB
+  Initializing data...
+  Initialization complete.
+  Performing warm-up run...
+  Warm-up complete.
+  Performing 20 timed repetitions...
+  Timing complete.
+  Repetitions: 20
+  Total time for 20 runs: 0.003031 seconds
+  Average time per run: 0.000151551 seconds
+  Performance: 1.946 GIOPS (Billion Integer Operations per Second)
+===================================================================
+===================================================================
+Testing n = 512 (Matrix 262144 elements, Vector 512 elements)
+  Data Size: Matrix=1.00 MB, Vectors(x2)=0.00 MB, Total=1.00 MB
+  Initializing data...
+  Initialization complete.
+  Performing warm-up run...
+  Warm-up complete.
+  Performing 10 timed repetitions...
+  Timing complete.
+  Repetitions: 10
+  Total time for 10 runs: 0.005026 seconds
+  Average time per run: 0.000502586 seconds
+  Performance: 1.043 GIOPS (Billion Integer Operations per Second)
+===================================================================
+===================================================================
+Testing n = 768 (Matrix 589824 elements, Vector 768 elements)
+  Data Size: Matrix=2.25 MB, Vectors(x2)=0.01 MB, Total=2.26 MB
+  Initializing data...
+  Initialization complete.
+  Performing warm-up run...
+  Warm-up complete.
+  Performing 10 timed repetitions...
+  Timing complete.
+  Repetitions: 10
+  Total time for 10 runs: 0.009144 seconds
+  Average time per run: 0.000914407 seconds
+  Performance: 1.290 GIOPS (Billion Integer Operations per Second)
+===================================================================
+===================================================================
+Testing n = 1024 (Matrix 1048576 elements, Vector 1024 elements)
+  Data Size: Matrix=4.00 MB, Vectors(x2)=0.01 MB, Total=4.01 MB
+  Initializing data...
+  Initialization complete.
+  Performing warm-up run...
+  Warm-up complete.
+  Performing 5 timed repetitions...
+  Timing complete.
+  Repetitions: 5
+  Total time for 5 runs: 0.009235 seconds
+  Average time per run: 0.001846981 seconds
+  Performance: 1.135 GIOPS (Billion Integer Operations per Second)
+===================================================================
+===================================================================
+Testing n = 1280 (Matrix 1638400 elements, Vector 1280 elements)
+  Data Size: Matrix=6.25 MB, Vectors(x2)=0.01 MB, Total=6.26 MB
+  Initializing data...
+  Initialization complete.
+  Performing warm-up run...
+  Warm-up complete.
+  Performing 5 timed repetitions...
+  Timing complete.
+  Repetitions: 5
+  Total time for 5 runs: 0.013275 seconds
+  Average time per run: 0.002655029 seconds
+  Performance: 1.234 GIOPS (Billion Integer Operations per Second)
+===================================================================
+===================================================================
+Testing n = 1400 (Matrix 1960000 elements, Vector 1400 elements)
+  Data Size: Matrix=7.48 MB, Vectors(x2)=0.01 MB, Total=7.49 MB
+  Initializing data...
+  Initialization complete.
+  Performing warm-up run...
+  Warm-up complete.
+  Performing 5 timed repetitions...
+  Timing complete.
+  Repetitions: 5
+  Total time for 5 runs: 0.014389 seconds
+  Average time per run: 0.002877808 seconds
+  Performance: 1.362 GIOPS (Billion Integer Operations per Second)
+===================================================================
+===================================================================
+Testing n = 1448 (Matrix 2096704 elements, Vector 1448 elements)
+  Data Size: Matrix=8.00 MB, Vectors(x2)=0.01 MB, Total=8.01 MB
+  Initializing data...
+  Initialization complete.
+  Performing warm-up run...
+  Warm-up complete.
+  Performing 5 timed repetitions...
+  Timing complete.
+  Repetitions: 5
+  Total time for 5 runs: 0.014565 seconds
+  Average time per run: 0.002912998 seconds
+  Performance: 1.440 GIOPS (Billion Integer Operations per Second)
+===================================================================
+===================================================================
+Testing n = 1536 (Matrix 2359296 elements, Vector 1536 elements)
+  Data Size: Matrix=9.00 MB, Vectors(x2)=0.01 MB, Total=9.01 MB
+  Initializing data...
+  Initialization complete.
+  Performing warm-up run...
+  Warm-up complete.
+  Performing 5 timed repetitions...
+  Timing complete.
+  Repetitions: 5
+  Total time for 5 runs: 0.026747 seconds
+  Average time per run: 0.005349398 seconds
+  Performance: 0.882 GIOPS (Billion Integer Operations per Second)
+===================================================================
+===================================================================
+Testing n = 1792 (Matrix 3211264 elements, Vector 1792 elements)
+  Data Size: Matrix=12.25 MB, Vectors(x2)=0.01 MB, Total=12.26 MB
+  Initializing data...
+  Initialization complete.
+  Performing warm-up run...
+  Warm-up complete.
+  Performing 5 timed repetitions...
+  Timing complete.
+  Repetitions: 5
+  Total time for 5 runs: 0.066851 seconds
+  Average time per run: 0.013370228 seconds
+  Performance: 0.480 GIOPS (Billion Integer Operations per Second)
+===================================================================
+===================================================================
+Testing n = 2048 (Matrix 4194304 elements, Vector 2048 elements)
+  Data Size: Matrix=16.00 MB, Vectors(x2)=0.02 MB, Total=16.02 MB
+  Initializing data...
+  Initialization complete.
+  Performing warm-up run...
+  Warm-up complete.
+  Performing 5 timed repetitions...
+  Timing complete.
+  Repetitions: 5
+  Total time for 5 runs: 0.144628 seconds
+  Average time per run: 0.028925610 seconds
+  Performance: 0.290 GIOPS (Billion Integer Operations per Second)
+===================================================================
+===================================================================
+Testing n = 3000 (Matrix 9000000 elements, Vector 3000 elements)
+  Data Size: Matrix=34.33 MB, Vectors(x2)=0.02 MB, Total=34.36 MB
+  Initializing data...
+  Initialization complete.
+  Performing warm-up run...
+  Warm-up complete.
+  Performing 5 timed repetitions...
+  Timing complete.
+  Repetitions: 5
+  Total time for 5 runs: 0.215757 seconds
+  Average time per run: 0.043151379 seconds
+  Performance: 0.417 GIOPS (Billion Integer Operations per Second)
+===================================================================
+===================================================================
+Testing n = 4000 (Matrix 16000000 elements, Vector 4000 elements)
+  Data Size: Matrix=61.04 MB, Vectors(x2)=0.03 MB, Total=61.07 MB
+  Initializing data...
+  Initialization complete.
+  Performing warm-up run...
+  Warm-up complete.
+  Performing 5 timed repetitions...
+  Timing complete.
+  Repetitions: 5
+  Total time for 5 runs: 0.414288 seconds
+  Average time per run: 0.082857561 seconds
+  Performance: 0.386 GIOPS (Billion Integer Operations per Second)
+===================================================================
+Benchmark finished.
