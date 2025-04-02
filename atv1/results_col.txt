@@ -1,192 +1,24 @@
-===================================================================
-Testing n = 32 (Matrix 1024 elements, Vector 32 elements)
-  Preenchendo a matriz
-  Executando 50 multiplicações de matriz
-  Repetições: 50
-  Soma dos tempos de 50 runs: 0.000388 segundos
-  Tempo médio por cálculo: 0.000007763 segundos
-===================================================================
-===================================================================
-Testing n = 64 (Matrix 4096 elements, Vector 64 elements)
-  Preenchendo a matriz
-  Executando 50 multiplicações de matriz
-  Repetições: 50
-  Soma dos tempos de 50 runs: 0.000572 segundos
-  Tempo médio por cálculo: 0.000011439 segundos
-===================================================================
-===================================================================
-Testing n = 80 (Matrix 6400 elements, Vector 80 elements)
-  Preenchendo a matriz
-  Executando 50 multiplicações de matriz
-  Repetições: 50
-  Soma dos tempos de 50 runs: 0.000919 segundos
-  Tempo médio por cálculo: 0.000018377 segundos
-===================================================================
-===================================================================
-Testing n = 88 (Matrix 7744 elements, Vector 88 elements)
-  Preenchendo a matriz
-  Executando 50 multiplicações de matriz
-  Repetições: 50
-  Soma dos tempos de 50 runs: 0.001178 segundos
-  Tempo médio por cálculo: 0.000023561 segundos
-===================================================================
-===================================================================
-Testing n = 96 (Matrix 9216 elements, Vector 96 elements)
-  Preenchendo a matriz
-  Executando 50 multiplicações de matriz
-  Repetições: 50
-  Soma dos tempos de 50 runs: 0.001379 segundos
-  Tempo médio por cálculo: 0.000027580 segundos
-===================================================================
-===================================================================
-Testing n = 112 (Matrix 12544 elements, Vector 112 elements)
-  Preenchendo a matriz
-  Executando 50 multiplicações de matriz
-  Repetições: 50
-  Soma dos tempos de 50 runs: 0.001816 segundos
-  Tempo médio por cálculo: 0.000036321 segundos
-===================================================================
-===================================================================
-Testing n = 128 (Matrix 16384 elements, Vector 128 elements)
-  Preenchendo a matriz
-  Executando 50 multiplicações de matriz
-  Repetições: 50
-  Soma dos tempos de 50 runs: 0.002646 segundos
-  Tempo médio por cálculo: 0.000052924 segundos
-===================================================================
-===================================================================
-Testing n = 192 (Matrix 36864 elements, Vector 192 elements)
-  Preenchendo a matriz
-  Executando 50 multiplicações de matriz
-  Repetições: 50
-  Soma dos tempos de 50 runs: 0.005971 segundos
-  Tempo médio por cálculo: 0.000119424 segundos
-===================================================================
-===================================================================
-Testing n = 224 (Matrix 50176 elements, Vector 224 elements)
-  Preenchendo a matriz
-  Executando 20 multiplicações de matriz
-  Repetições: 20
-  Soma dos tempos de 20 runs: 0.003062 segundos
-  Tempo médio por cálculo: 0.000153100 segundos
-===================================================================
-===================================================================
-Testing n = 240 (Matrix 57600 elements, Vector 240 elements)
-  Preenchendo a matriz
-  Executando 20 multiplicações de matriz
-  Repetições: 20
-  Soma dos tempos de 20 runs: 0.003270 segundos
-  Tempo médio por cálculo: 0.000163496 segundos
-===================================================================
-===================================================================
-Testing n = 256 (Matrix 65536 elements, Vector 256 elements)
-  Preenchendo a matriz
-  Executando 20 multiplicações de matriz
-  Repetições: 20
-  Soma dos tempos de 20 runs: 0.005283 segundos
-  Tempo médio por cálculo: 0.000264144 segundos
-===================================================================
-===================================================================
-Testing n = 272 (Matrix 73984 elements, Vector 272 elements)
-  Preenchendo a matriz
-  Executando 20 multiplicações de matriz
-  Repetições: 20
-  Soma dos tempos de 20 runs: 0.004372 segundos
-  Tempo médio por cálculo: 0.000218606 segundos
-===================================================================
-===================================================================
-Testing n = 384 (Matrix 147456 elements, Vector 384 elements)
-  Preenchendo a matriz
-  Executando 20 multiplicações de matriz
-  Repetições: 20
-  Soma dos tempos de 20 runs: 0.011671 segundos
-  Tempo médio por cálculo: 0.000583541 segundos
-===================================================================
-===================================================================
-Testing n = 512 (Matrix 262144 elements, Vector 512 elements)
-  Preenchendo a matriz
-  Executando 10 multiplicações de matriz
-  Repetições: 10
-  Soma dos tempos de 10 runs: 0.012629 segundos
-  Tempo médio por cálculo: 0.001262903 segundos
-===================================================================
-===================================================================
-Testing n = 768 (Matrix 589824 elements, Vector 768 elements)
-  Preenchendo a matriz
-  Executando 10 multiplicações de matriz
-  Repetições: 10
-  Soma dos tempos de 10 runs: 0.029791 segundos
-  Tempo médio por cálculo: 0.002979088 segundos
-===================================================================
-===================================================================
-Testing n = 1024 (Matrix 1048576 elements, Vector 1024 elements)
-  Preenchendo a matriz
-  Executando 5 multiplicações de matriz
-  Repetições: 5
-  Soma dos tempos de 5 runs: 0.026034 segundos
-  Tempo médio por cálculo: 0.005206776 segundos
-===================================================================
-===================================================================
-Testing n = 1280 (Matrix 1638400 elements, Vector 1280 elements)
-  Preenchendo a matriz
-  Executando 5 multiplicações de matriz
-  Repetições: 5
-  Soma dos tempos de 5 runs: 0.044137 segundos
-  Tempo médio por cálculo: 0.008827400 segundos
-===================================================================
-===================================================================
-Testing n = 1400 (Matrix 1960000 elements, Vector 1400 elements)
-  Preenchendo a matriz
-  Executando 5 multiplicações de matriz
-  Repetições: 5
-  Soma dos tempos de 5 runs: 0.048692 segundos
-  Tempo médio por cálculo: 0.009738398 segundos
-===================================================================
-===================================================================
-Testing n = 1448 (Matrix 2096704 elements, Vector 1448 elements)
-  Preenchendo a matriz
-  Executando 5 multiplicações de matriz
-  Repetições: 5
-  Soma dos tempos de 5 runs: 0.050669 segundos
-  Tempo médio por cálculo: 0.010133791 segundos
-===================================================================
-===================================================================
-Testing n = 1536 (Matrix 2359296 elements, Vector 1536 elements)
-  Preenchendo a matriz
-  Executando 5 multiplicações de matriz
-  Repetições: 5
-  Soma dos tempos de 5 runs: 0.085491 segundos
-  Tempo médio por cálculo: 0.017098188 segundos
-===================================================================
-===================================================================
-Testing n = 1792 (Matrix 3211264 elements, Vector 1792 elements)
-  Preenchendo a matriz
-  Executando 5 multiplicações de matriz
-  Repetições: 5
-  Soma dos tempos de 5 runs: 0.113291 segundos
-  Tempo médio por cálculo: 0.022658205 segundos
-===================================================================
-===================================================================
-Testing n = 2048 (Matrix 4194304 elements, Vector 2048 elements)
-  Preenchendo a matriz
-  Executando 5 multiplicações de matriz
-  Repetições: 5
-  Soma dos tempos de 5 runs: 0.397393 segundos
-  Tempo médio por cálculo: 0.079478645 segundos
-===================================================================
-===================================================================
-Testing n = 3000 (Matrix 9000000 elements, Vector 3000 elements)
-  Preenchendo a matriz
-  Executando 5 multiplicações de matriz
-  Repetições: 5
-  Soma dos tempos de 5 runs: 0.318591 segundos
-  Tempo médio por cálculo: 0.063718176 segundos
-===================================================================
-===================================================================
-Testing n = 4000 (Matrix 16000000 elements, Vector 4000 elements)
-  Preenchendo a matriz
-  Executando 5 multiplicações de matriz
-  Repetições: 5
-  Soma dos tempos de 5 runs: 0.565013 segundos
-  Tempo médio por cálculo: 0.113002586 segundos
-===================================================================
+n, total_elements, repetitions, total time, average time112,12544,50,0.001839,0.000036778
+128,16384,50,0.002661,0.000053220
+160,25600,50,0.003676,0.000073519
+170,28900,50,0.004403,0.000088062
+180,32400,50,0.004628,0.000092559
+190,36100,50,0.005107,0.000102143
+224,50176,20,0.002846,0.000142300
+240,57600,20,0.003472,0.000173593
+250,62500,20,0.003576,0.000178802
+256,65536,20,0.004961,0.000248051
+512,262144,10,0.012904,0.001290393
+520,270400,10,0.009154,0.000915384
+530,280900,10,0.009586,0.000958610
+540,291600,10,0.010049,0.001004887
+560,313600,10,0.011027,0.001102710
+1350,1822500,5,0.045697,0.009139395
+1400,1960000,5,0.045098,0.009019566
+1420,2016400,5,0.057771,0.011554193
+1430,2044900,5,0.050808,0.010161591
+1440,2073600,5,0.053444,0.010688782
+1450,2102500,5,0.058447,0.011689377
+1500,2250000,5,0.066787,0.013357401
+3000,9000000,5,0.314805,0.062961006
+4000,16000000,5,0.556852,0.111370420
