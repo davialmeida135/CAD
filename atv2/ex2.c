@@ -1,20 +1,26 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/time.h>
+
 // Um preenchendo
 // Um somando
 // Um somando em duas variáveis S1 = A[i], S2 = A[i+1]
-#define N 10000000
+#define N 500000000
+
 int main(int argc, char *argv[]) {
-    //int n = argv[1] ? atoi(argv[1]) : 1000000;
-    // Preenchendo a lista
+
+    int *vetor = (int*)malloc(N * sizeof(int));
+    if (vetor == NULL) {
+        printf("Memory allocation failed\n");
+        return 1;
+    }
     
     struct timeval start, end;
     gettimeofday(&start, NULL);
 
-    int i[N];
+    // Preenchendo a lista
     for (int j = 0; j < N; j++) {
-        i[j] = j;
+        vetor[j] = j;
     }
     
     gettimeofday(&end, NULL);
@@ -25,9 +31,9 @@ int main(int argc, char *argv[]) {
 
     gettimeofday(&start, NULL);
 
-    int soma = 0;
+    long long int soma = 0;
     for (int j = 0; j < N; j++) {
-        soma = soma + i[j];
+        soma = soma + vetor[j];
     }
 
     gettimeofday(&end, NULL);
@@ -38,11 +44,12 @@ int main(int argc, char *argv[]) {
 
     gettimeofday(&start, NULL);
 
-    int S1 = 0;
-    int S2 = 0;
-    for (int j = 0; j < N; j += 2) {
-        S1 += i[j];
-        S2 += i[j + 1];
+    long long int S1 = 0;
+    long long int S2 = 0;
+
+    for (int j = 0; j < N - 1; j += 2) {
+        S1 += vetor[j];
+        S2 += vetor[j + 1];
     }
 
     gettimeofday(&end, NULL);
@@ -51,6 +58,7 @@ int main(int argc, char *argv[]) {
     elapsed = seconds + microseconds * 1e-6;
     printf("Sum in two variables took %f seconds with result %d\n", elapsed, S1 + S2);
 
+    free(vetor);
 
     return 0;
 }
