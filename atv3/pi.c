@@ -6,7 +6,7 @@
 int main(int argc, char *argv[])
 {
     double pi = 0.0;
-    int iterations = 100000000;
+    int iterations = 1000000;
     double term = 0.0;
     float denom=1.0;
     
@@ -28,7 +28,7 @@ int main(int argc, char *argv[])
     // Get start time
     clock_gettime(CLOCK_MONOTONIC, &start_time);
     
-    int log_interval = 100000; // Log every 10,000 iterations
+    int log_interval = 1000; // Log every 10,000 iterations
     struct timespec current_time;
     double current_execution_time;
 
