@@ -12,14 +12,20 @@
 
 int main(int argc, char *argv[]) {
     // Allocate array on the heap instead of the stack
-    int *i = (int *)malloc(N * sizeof(int));
-    if (i == NULL) {
+    int *A = (int *)malloc(N * sizeof(int));
+    if (A == NULL) {
         perror("Failed to allocate memory for array i");
         return 1; // Indicate failure
     }
+    int *B = (int *)malloc(N * sizeof(int));
+    if (B == NULL) {
+        perror("Failed to allocate memory for array j");
+        return 1; // Indicate failure
+    }
+    
 
     // Optional: Get number of threads from command line or set default
-    int num_threads = 4; // Default number of threads
+    int num_threads = 1; // Default number of threads
     printf("Using %d threads.\n", num_threads);
 
     // --- Preenchendo a lista ---
@@ -30,9 +36,11 @@ int main(int argc, char *argv[]) {
     #pragma omp parallel for
     for (int j = 0; j < N; j++) {
         if (j %2 == 0) {
-            i[j] = j;
+            A[j] = j;
+            B[j] = -j;
         } else {
-            i[j] = -j; 
+            A[j] = -j; 
+            B[j] = j;
         }
     }
 
@@ -53,7 +61,7 @@ int main(int argc, char *argv[]) {
     long long int soma = 0;
     #pragma omp parallel for num_threads(num_threads)
     for (long int j = 0; j < N; j++) {
-        soma = soma + i[j];
+        soma = soma + A[j] + B[j];
     }
 
     gettimeofday(&end, NULL);
@@ -69,7 +77,8 @@ int main(int argc, char *argv[]) {
     printf("Sum in one variable took %f seconds with result %lld\n", elapsed, soma);
 
     // Free the allocated memory
-    free(i);
+    free(A);
+    free(B);
 
     return 0; // Indicate success
 }
