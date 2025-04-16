@@ -22,10 +22,21 @@ int main(int argc, char *argv[]) {
         perror("Failed to allocate memory for array j");
         return 1; // Indicate failure
     }
+    int *C = (int *)malloc(N * sizeof(int));
+    if (C == NULL) {
+        perror("Failed to allocate memory for array k");
+        return 1; // Indicate failure
+    }
+    int *D = (int *)malloc(N * sizeof(int));
+    if (D == NULL) {
+        perror("Failed to allocate memory for array l");
+        return 1; // Indicate failure
+    }
     
 
-    // Optional: Get number of threads from command line or set default
-    int num_threads = 1; // Default number of threads
+    int num_threads = 0;
+    printf("Enter the value of N: ");
+    scanf("%d", &num_threads);
     printf("Using %d threads.\n", num_threads);
 
     // --- Preenchendo a lista ---
@@ -33,14 +44,18 @@ int main(int argc, char *argv[]) {
     gettimeofday(&start, NULL);
 
     // Corrected pragma: parallel spelling
-    #pragma omp parallel for
+    #pragma omp parallel for num_threads(num_threads) 
     for (int j = 0; j < N; j++) {
         if (j %2 == 0) {
             A[j] = j;
             B[j] = -j;
+            C[j] = j;
+            D[j] = -j;
         } else {
             A[j] = -j; 
             B[j] = j;
+            C[j] = -j;
+            D[j] = j;
         }
     }
 
@@ -59,9 +74,9 @@ int main(int argc, char *argv[]) {
     gettimeofday(&start, NULL);
 
     long long int soma = 0;
-    #pragma omp parallel for num_threads(num_threads)
+    #pragma omp parallel for num_threads(num_threads) reduction(+:soma)
     for (long int j = 0; j < N; j++) {
-        soma = soma + A[j] + B[j];
+        soma = soma + A[j] + B[j] + C[j] + D[j];
     }
 
     gettimeofday(&end, NULL);
