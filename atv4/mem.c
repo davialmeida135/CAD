@@ -74,9 +74,9 @@ int main(int argc, char *argv[]) {
     gettimeofday(&start, NULL);
 
     long long int soma = 0;
-    #pragma omp parallel for num_threads(num_threads) reduction(+:soma)
+    #pragma omp parallel for num_threads(num_threads) //reduction(+:soma)
     for (long int j = 0; j < N; j++) {
-        soma = soma + A[j] + B[j] + C[j] + D[j];
+        A[j] = B[j] + C[j] + D[j];
     }
 
     gettimeofday(&end, NULL);

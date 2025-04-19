@@ -13,17 +13,23 @@
 int main(int argc, char *argv[]) {
     struct timeval start, end;
 
-    long int limit = 100000000; 
+    long int limit = 23000000; 
     double sum = 0.0; 
+    int num_threads = 0;
+    printf("Enter the value of N: ");
+    scanf("%d", &num_threads);
 
-    int num_threads = 4; 
     printf("Calculating sum with %d threads...\n", num_threads);
 
     gettimeofday(&start, NULL);
 
     #pragma omp parallel for num_threads(num_threads)
     for(long int k = 1.0; k <= limit; k++) { 
-        sum += sin(k) + cos(k) * sqrt(k) + tan(k);
+        double term1 = sin(k / 100.0) * cos(k / 50.0);
+        double term2 = sqrt(fabs(tan((double)k))) + 1.0;
+        double term3 = log(term2);
+        double term4 = exp(-k / (double)limit);
+        sum += pow(term1, 4) * term3 * term4 + cbrt((double)k); 
     }
 
     gettimeofday(&end, NULL);
