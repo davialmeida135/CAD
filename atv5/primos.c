@@ -20,7 +20,7 @@ int main() {
     scanf("%d", &N);
 
     gettimeofday(&start, NULL);
-    #pragma omp parallel for num_threads(N) reduction(+:soma)
+    #pragma omp parallel for num_threads(N) //reduction(+:soma)
     for (int i = 2; i <= N; i++) {
         if (is_prime(i)) {
             count++;
