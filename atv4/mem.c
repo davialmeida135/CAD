@@ -8,7 +8,7 @@
 // Um somando em duas variáveis S1 = A[i], S2 = A[i+1]
 
 // Compile with: gcc -fopenmp mem.c -o mem
-#define N 1000000000 // Increased N for a more significant workload
+#define N 1001000000 // Increased N for a more significant workload
 
 int main(int argc, char *argv[]) {
     // Allocate array on the heap instead of the stack
