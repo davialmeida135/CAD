@@ -23,31 +23,26 @@ int main() {
     }
 
     double x, y;
-    #pragma omp parallel default(none) shared(total_pontos, partial_counts) private(x, y)
-    {
-        unsigned int seed = time(NULL) + omp_get_thread_num();
-        int dentro_circulo = 0; 
-        int thread_num = omp_get_thread_num();
-
-        #pragma omp for
-        for (int i = 0; i < total_pontos; i++) {
-
-            x = (double)rand_r(&seed) / RAND_MAX;
-            y = (double)rand_r(&seed) / RAND_MAX; 
-            printf("Thread %d: x = %f, y = %f\n", thread_num, x, y);
-
-            if (((x - 0.5)*(x - 0.5) + (y - 0.5)*(y - 0.5)) <= 0.25) {
-                {
-                    dentro_circulo++;
-                }
-            }
-        }       
-        partial_counts[thread_num] = dentro_circulo;
-
+    int tid = 0; // Thread ID
+    int seed; 
+    int local_count = 0;
+    #pragma omp parallel default(none) shared(total_pontos, partial_counts) private(x, y, tid, seed) firstprivate(local_count)
+    {  
+       tid = omp_get_thread_num();
+       seed = time(NULL) + tid;
+       #pragma omp for nowait // Threads podem sair do loop quando terminarem
+       for (int i = 0; i < total_pontos; i++) {
+           x = (double)rand_r(&seed) / RAND_MAX;
+           y = (double)rand_r(&seed) / RAND_MAX;
+           if (((x - 0.5)*(x - 0.5) + (y - 0.5)*(y - 0.5)) <= 0.25) {
+               local_count++; 
+           }
+        }
+        partial_counts[tid] = local_count;
     }
 
     int total_count = 0;
-    for (int i = 1; i < max_threads; i++) {
+    for (int i = 0; i < max_threads; i++) {
         // Sum up the counts from each thread
         printf("Thread %d: %d\n", i, partial_counts[i]);
         total_count += partial_counts[i];

@@ -57,12 +57,15 @@ int main(){
     Node* current = &capitao;
     #pragma omp parallel firstprivate(current)
     {
-        while (current != NULL) {
-            #pragma omp task
-            {
-                printf("%d: %s", omp_get_thread_num(), current->nome);
+        #pragma omp single
+        {
+            while (current != NULL) {
+                #pragma omp task
+                {
+                    printf("%d: %s", omp_get_thread_num(), current->nome);
+                }
+                current = current->next;
             }
-            current = current->next;
         }
     }
     return 0;
