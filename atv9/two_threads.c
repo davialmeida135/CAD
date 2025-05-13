@@ -46,11 +46,9 @@ void free_list(Node* head) {
 int main(){
     Node* lista1 = (Node*)malloc(sizeof(Node));
     lista1->valor = 1;
-
     Node* lista2 = (Node*)malloc(sizeof(Node));
     lista2->valor = 1;
     unsigned int seed = 42;
-
     #pragma omp parallel num_threads(2)
     {
         #pragma omp single
@@ -61,7 +59,6 @@ int main(){
                     Node* next_node = (Node*)malloc(sizeof(Node));
                     double r = (double)rand_r(&seed) / RAND_MAX;
                     next_node->valor = r;
-            
                     if(r>0.5){
                         # pragma omp critical (l1)
                         {

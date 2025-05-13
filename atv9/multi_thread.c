@@ -8,9 +8,8 @@ typedef struct Node {
     double valor;
 } Node;
 
-#define N_ITERATIONS 30 // Total number of nodes to add across all lists
+#define N_ITERATIONS 30
 
-// Function to print a linked list
 void print_list(Node* head, int list_num, int total_iterations) {
     printf("Lista %d: ", list_num);
     Node* current = head;
@@ -19,7 +18,7 @@ void print_list(Node* head, int list_num, int total_iterations) {
         printf("%.2f -> ", current->valor);
         current = current->next;
         count++;
-        // Safety break for very long lists or cycles
+        // Evitar problemas
         if (count > total_iterations + 5) {
             printf("... (lista muito longa ou ciclo detectado)\n");
             break;
@@ -48,17 +47,16 @@ int main() {
         return 1;
     }
 
-    // Allocate an array for list heads
     Node** list_heads = (Node**)malloc(num_lists * sizeof(Node*));
     if (list_heads == NULL) {
         perror("Failed to allocate memory for list heads");
         return 1;
     }
     for (int i = 0; i < num_lists; i++) {
-        list_heads[i] = NULL; // Initialize all lists as empty
+        list_heads[i] = NULL;
     }
 
-    // Allocate and initialize an array of OpenMP locks, one for each list
+    // Lista de locks para cada lista
     omp_lock_t* locks = (omp_lock_t*)malloc(num_lists * sizeof(omp_lock_t));
     if (locks == NULL) {
         perror("Failed to allocate memory for locks");
@@ -80,11 +78,11 @@ int main() {
                 {
                     Node* new_node = (Node*)malloc(sizeof(Node));
                     if (new_node != NULL) {
-                        // Numero aleatorio entre 0 e 1
+                        // Numero aleatorio entre 0 e 1 que vai ser inserido na lista
                         new_node->valor = (double)rand_r(&seed) / RAND_MAX;
                         new_node->next = NULL;
 
-                        // Numero aleatorio entre 0 e num_lists - 1
+                        // Numero aleatorio entre 0 e num_lists - 1 (para escolher a lista)
                         int list_index = rand_r(&seed) % num_lists;
 
                         // Lock na lista
@@ -108,8 +106,8 @@ int main() {
 
     // Cleanup
     for (int i = 0; i < num_lists; i++) {
-        free_list(list_heads[i]); // Free each list
-        omp_destroy_lock(&locks[i]); // Destroy locks
+        free_list(list_heads[i]);
+        omp_destroy_lock(&locks[i]);
     }
     free(list_heads);
     free(locks);
