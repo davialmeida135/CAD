@@ -7,7 +7,7 @@
 #include <time.h>
 
 int main() {
-    long int total_pontos = 100000000;
+    long int total_pontos = 20000000;
     
     struct timeval start, end;
     // x, y don't need to be defined here if declared inside parallel region
@@ -32,12 +32,11 @@ int main() {
 
             if (((x - 0.5)*(x - 0.5) + (y - 0.5)*(y - 0.5)) <= 0.25) {
                 {
-                    dentro_circulo++;
+                    #pragma omp critical
+                    total_dentro_circulo ++;
                 }
             }
         } 
-        #pragma omp critical
-        total_dentro_circulo += dentro_circulo;     
     }
 
     gettimeofday(&end, NULL);

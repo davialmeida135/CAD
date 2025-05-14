@@ -7,7 +7,7 @@
 #include <time.h>
 
 int main() {
-    long int total_pontos = 100000000;
+    long int total_pontos = 20000000;
     
     struct timeval start, end;
     // x, y don't need to be defined here if declared inside parallel region
