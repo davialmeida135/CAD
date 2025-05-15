@@ -73,7 +73,7 @@ int main() {
         }
     }
     // Perturbação no centro
-    u[IDX(NX/2, NY/2, NZ/2)] += 0.1f;
+    u[IDX(NX/2, NY/2, NZ/2)] += 15f;
 
     // Loop de tempo
     for (int t = 0; t < NT; t++) {
