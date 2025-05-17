@@ -98,6 +98,7 @@ int main() {
     }
     // CSV Header: iter, u_center, v_center, w_center, max_dev_u
     fprintf(output_csv_file, "TimeStep,Field_U_Center,MaxDeviation_U,StepDuration\n");
+    fprintf(output_csv_file, "-1,1.0,0.0,0.0\n");
     
     // Initialize scalar fields: all points to 1.0f
     for (int ix = 0; ix < GRID_SIZE_X; ix++) {
@@ -114,6 +115,9 @@ int main() {
     int center_y = GRID_SIZE_Y / 2;
     int center_z = GRID_SIZE_Z / 2;
     field_u_current[MAP_3D_TO_1D_INDEX(center_x, center_y, center_z)] += PERTURBATION_MAGNITUDE;
+    fprintf(output_csv_file, "0,%.6f,%.6f,0.0\n",
+            field_u_current[MAP_3D_TO_1D_INDEX(GRID_SIZE_X / 2, GRID_SIZE_Y / 2, GRID_SIZE_Z / 2)],
+            calculate_max_deviation_from_one(field_u_current));
     
     printf("Starting simulation...\n");
     
@@ -138,14 +142,14 @@ int main() {
         field_u_current = field_u_next;
         field_u_next = temp_swap_pointer;
 
-        // Calcula a máxima diferença de field_u em relação a 1.0
-        float current_max_dev_u = calculate_max_deviation_from_one(field_u_current);
-
         // Get center values for logging
         float u_center_val = field_u_current[MAP_3D_TO_1D_INDEX(center_x, center_y, center_z)];
+        
+        // Calcula a máxima diferença de field_u em relação a 1.0
+        float current_max_dev_u = u_center_val - 1.0f;
 
         fprintf(output_csv_file, "%d,%.6f,%.6f,%.6f\n",
-                time_step_count, u_center_val, current_max_dev_u, step_elapsed);
+                time_step_count+1, u_center_val, current_max_dev_u, step_elapsed);
 
     }
 
