@@ -5,7 +5,7 @@
 #include <omp.h>
 
 // --- Configuration Constants ---
-#define GRID_SIZE_X 512         // Number of grid points in X dimension
+#define GRID_SIZE_X 512        // Number of grid points in X dimension
 #define GRID_SIZE_Y 512         // Number of grid points in Y dimension
 #define GRID_SIZE_Z 512         // Number of grid points in Z dimension
 #define NUM_TIME_STEPS 5      // Total number of simulation time steps
@@ -15,6 +15,7 @@
 #define TIME_STEP_INCREMENT 0.1f // Time step size (delta T)
 #define DIFFUSION_COEFFICIENT 0.1f // Diffusion coefficient (Nu)
 #define PERTURBATION_MAGNITUDE 10.0f // Magnitude of perturbation
+
 
 // Macro to convert 3D grid coordinates to a 1D array index
 #define MAP_3D_TO_1D_INDEX(ix, iy, iz) \
@@ -50,6 +51,7 @@ float calculate_laplacian_periodic(float *scalar_field_data, int x_coord, int y_
 
 // Function to advance the simulation by one time step for a given scalar field
 void perform_time_step(float *current_field_data, float *next_field_data) {
+    #pragma omp parallel for collapse(3)
     for (int ix = 0; ix < GRID_SIZE_X; ix++) {
         for (int iy = 0; iy < GRID_SIZE_Y; iy++) {
             for (int iz = 0; iz < GRID_SIZE_Z; iz++) {
