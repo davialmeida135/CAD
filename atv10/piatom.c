@@ -34,7 +34,6 @@ int main() {
                 {
                     #pragma omp atomic
                     total_dentro_circulo ++;     
-    
                 }
             }
         } 

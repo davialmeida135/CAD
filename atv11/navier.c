@@ -1,103 +1,146 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <math.h>
+#include <math.h> // For fabsf
 
-#define NX 32
-#define NY 32
-#define NZ 32
-#define NT 100
-#define DX 1.0f
-#define DY 1.0f
-#define DZ 1.0f
-#define DT 0.1f
-#define NU 0.1f
+// --- Configuration Constants ---
+#define GRID_SIZE_X 32          // Number of grid points in X dimension
+#define GRID_SIZE_Y 32          // Number of grid points in Y dimension
+#define GRID_SIZE_Z 32          // Number of grid points in Z dimension
+#define NUM_TIME_STEPS 100      // Total number of simulation time steps
+#define CELL_SPACING_X 1.0f     // Spatial step size (delta X)
+#define CELL_SPACING_Y 1.0f     // Spatial step size (delta Y)
+#define CELL_SPACING_Z 1.0f     // Spatial step size (delta Z)
+#define TIME_STEP_INCREMENT 0.1f // Time step size (delta T)
+#define DIFFUSION_COEFFICIENT 0.1f // Diffusion coefficient (Nu)
 
-// Macros para acessar 3D como 1D
-#define IDX(i, j, k) ((i)*NY*NZ + (j)*NZ + (k))
+// Macro to convert 3D grid coordinates to a 1D array index
+#define MAP_3D_TO_1D_INDEX(ix, iy, iz) \
+    ((ix) * GRID_SIZE_Y * GRID_SIZE_Z + (iy) * GRID_SIZE_Z + (iz))
 
-// Função para aplicar o laplaciano com condições periódicas
-float laplacian(float *f, int i, int j, int k) {
-    int ip = (i + 1) % NX;
-    int im = (i - 1 + NX) % NX;
-    int jp = (j + 1) % NY;
-    int jm = (j - 1 + NY) % NY;
-    int kp = (k + 1) % NZ;
-    int km = (k - 1 + NZ) % NZ;
+// Function to calculate the Laplacian of a scalar field with periodic boundary conditions
+float calculate_laplacian_periodic(float *scalar_field_data, int x_coord, int y_coord, int z_coord) {
+    // Calculate neighbor indices with periodic wrap-around
+    int x_plus_1 = (x_coord + 1) % GRID_SIZE_X;
+    int x_minus_1 = (x_coord - 1 + GRID_SIZE_X) % GRID_SIZE_X;
+    int y_plus_1 = (y_coord + 1) % GRID_SIZE_Y;
+    int y_minus_1 = (y_coord - 1 + GRID_SIZE_Y) % GRID_SIZE_Y;
+    int z_plus_1 = (z_coord + 1) % GRID_SIZE_Z;
+    int z_minus_1 = (z_coord - 1 + GRID_SIZE_Z) % GRID_SIZE_Z;
 
-    float lap = (f[IDX(ip, j, k)] - 2.0f * f[IDX(i, j, k)] + f[IDX(im, j, k)]) / (DX * DX)
-              + (f[IDX(i, jp, k)] - 2.0f * f[IDX(i, j, k)] + f[IDX(i, jm, k)]) / (DY * DY)
-              + (f[IDX(i, j, kp)] - 2.0f * f[IDX(i, j, k)] + f[IDX(i, j, km)]) / (DZ * DZ);
-    return lap;
+    // Get values at current point and neighbors
+    float val_center = scalar_field_data[MAP_3D_TO_1D_INDEX(x_coord, y_coord, z_coord)];
+    float val_x_plus_1 = scalar_field_data[MAP_3D_TO_1D_INDEX(x_plus_1, y_coord, z_coord)];
+    float val_x_minus_1 = scalar_field_data[MAP_3D_TO_1D_INDEX(x_minus_1, y_coord, z_coord)];
+    float val_y_plus_1 = scalar_field_data[MAP_3D_TO_1D_INDEX(x_coord, y_plus_1, z_coord)];
+    float val_y_minus_1 = scalar_field_data[MAP_3D_TO_1D_INDEX(x_coord, y_minus_1, z_coord)];
+    float val_z_plus_1 = scalar_field_data[MAP_3D_TO_1D_INDEX(x_coord, y_coord, z_plus_1)];
+    float val_z_minus_1 = scalar_field_data[MAP_3D_TO_1D_INDEX(x_coord, y_coord, z_minus_1)];
+
+    // Discrete Laplacian formula
+    float laplacian_val =
+        (val_x_plus_1 - 2.0f * val_center + val_x_minus_1) / (CELL_SPACING_X * CELL_SPACING_X) +
+        (val_y_plus_1 - 2.0f * val_center + val_y_minus_1) / (CELL_SPACING_Y * CELL_SPACING_Y) +
+        (val_z_plus_1 - 2.0f * val_center + val_z_minus_1) / (CELL_SPACING_Z * CELL_SPACING_Z);
+
+    return laplacian_val;
 }
 
-void step(float *u, float *u_new) {
-    for (int i = 0; i < NX; i++) {
-        for (int j = 0; j < NY; j++) {
-            for (int k = 0; k < NZ; k++) {
-                int idx = IDX(i, j, k);
-                u_new[idx] = u[idx] + NU * DT * laplacian(u, i, j, k);
+// Function to advance the simulation by one time step for a given scalar field
+void perform_time_step(float *current_field_data, float *next_field_data) {
+    for (int ix = 0; ix < GRID_SIZE_X; ix++) {
+        for (int iy = 0; iy < GRID_SIZE_Y; iy++) {
+            for (int iz = 0; iz < GRID_SIZE_Z; iz++) {
+                int flat_index = MAP_3D_TO_1D_INDEX(ix, iy, iz);
+                float laplacian_at_point = calculate_laplacian_periodic(current_field_data, ix, iy, iz);
+                next_field_data[flat_index] = current_field_data[flat_index] +
+                                           DIFFUSION_COEFFICIENT * TIME_STEP_INCREMENT * laplacian_at_point;
             }
         }
     }
 }
 
-float max_deviation(float *u) {
-    float max_dev = 0.0f;
-    for (int i = 0; i < NX * NY * NZ; i++) {
-        float dev = fabsf(u[i] - 1.0f);
-        if (dev > max_dev) {
-            max_dev = dev;
+// Function to calculate the maximum deviation of a field from a reference value (1.0f)
+float calculate_max_deviation_from_one(float *scalar_field_data) {
+    float max_abs_deviation = 0.0f;
+    int total_grid_points = GRID_SIZE_X * GRID_SIZE_Y * GRID_SIZE_Z;
+    for (int i = 0; i < total_grid_points; i++) {
+        float current_deviation = fabsf(scalar_field_data[i] - 1.0f);
+        if (current_deviation > max_abs_deviation) {
+            max_abs_deviation = current_deviation;
         }
     }
-    return max_dev;
+    return max_abs_deviation;
 }
 
 int main() {
-    size_t size = NX * NY * NZ * sizeof(float);
-    float *u  = (float *)malloc(size);
-    float *u2 = (float *)malloc(size);
+    size_t single_field_mem_size = GRID_SIZE_X * GRID_SIZE_Y * GRID_SIZE_Z * sizeof(float);
 
-    float *v  = (float *)malloc(size);
-    float *v2 = (float *)malloc(size);
+    // Allocate memory for three scalar fields (u, v, w) and their "next step" buffers
+    float *field_u_current = (float *)malloc(single_field_mem_size);
+    float *field_u_next    = (float *)malloc(single_field_mem_size);
 
-    float *w  = (float *)malloc(size);
-    float *w2 = (float *)malloc(size);
+    if (!field_u_current || !field_u_next) {
+        perror("Failed to allocate memory for fields");
+        return EXIT_FAILURE;
+    }
 
-    // Inicializar campos com valor constante + perturbação no centro
-    for (int i = 0; i < NX; i++) {
-        for (int j = 0; j < NY; j++) {
-            for (int k = 0; k < NZ; k++) {
-                int idx = IDX(i, j, k);
-                u[idx] = v[idx] = w[idx] = 1.0f;
+    FILE *output_csv_file = fopen("simulation_results.csv", "w");
+    if (!output_csv_file) {
+        perror("Failed to open output CSV file");
+        // Free already allocated memory before exiting
+        free(field_u_current); free(field_u_next);
+        return EXIT_FAILURE;
+    }
+    // CSV Header: iter, u_center, v_center, w_center, max_dev_u
+    fprintf(output_csv_file, "TimeStep,Field_U_Center,MaxDeviation_U\n");
+
+    // Initialize scalar fields: all points to 1.0f
+    for (int ix = 0; ix < GRID_SIZE_X; ix++) {
+        for (int iy = 0; iy < GRID_SIZE_Y; iy++) {
+            for (int iz = 0; iz < GRID_SIZE_Z; iz++) {
+                int flat_index = MAP_3D_TO_1D_INDEX(ix, iy, iz);
+                field_u_current[flat_index] = 1.0f;
             }
         }
     }
-    // Perturbação no centro
-    u[IDX(NX/2, NY/2, NZ/2)] += 15f;
 
-    // Loop de tempo
-    for (int t = 0; t < NT; t++) {
-        step(u, u2);
-        step(v, v2);
-        step(w, w2);
+    // Introduce a perturbation at the center of field_u
+    int center_x = GRID_SIZE_X / 2;
+    int center_y = GRID_SIZE_Y / 2;
+    int center_z = GRID_SIZE_Z / 2;
+    field_u_current[MAP_3D_TO_1D_INDEX(center_x, center_y, center_z)] += 15.0f;
 
-        // Swap buffers
-        float *tmp;
+    printf("Starting simulation...\n");
 
-        tmp = u;  u = u2;  u2 = tmp;
-        tmp = v;  v = v2;  v2 = tmp;
-        tmp = w;  w = w2;  w2 = tmp;
+    // Main simulation time loop
+    for (int time_step_count = 0; time_step_count < NUM_TIME_STEPS; time_step_count++) {
+        perform_time_step(field_u_current, field_u_next);
 
-        if (t % 10 == 0) {
-            float dev = max_deviation(u);
-            printf("Passo %d: desvio máximo da velocidade u = %.6f\n", t, dev);
-        }
+        // Swap buffers (current becomes next, next becomes old current to be overwritten)
+        float *temp_swap_pointer;
+
+        temp_swap_pointer = field_u_current;
+        field_u_current = field_u_next;
+        field_u_next = temp_swap_pointer;
+
+        // Calculate deviation for field_u (the one with perturbation)
+        float current_max_dev_u = calculate_max_deviation_from_one(field_u_current);
+
+        // Get center values for logging (correcting the original bug)
+        float u_center_val = field_u_current[MAP_3D_TO_1D_INDEX(center_x, center_y, center_z)];
+
+        fprintf(output_csv_file, "%d,%.6f,%.6f\n",
+                time_step_count, u_center_val, current_max_dev_u);
+
     }
 
-    printf("\nDesvio final: %.6f\n", max_deviation(u));
+    float final_max_dev_u = calculate_max_deviation_from_one(field_u_current);
+    printf("\nSimulation finished.\nFinal max deviation of field_u from 1.0: %.6f\n", final_max_dev_u);
 
-    free(u);  free(u2);
-    free(v);  free(v2);
-    free(w);  free(w2);
-    return 0;
+    // Cleanup
+    fclose(output_csv_file);
+    free(field_u_current); free(field_u_next);
+
+    printf("Results saved to simulation_results.csv\n");
+    return EXIT_SUCCESS;
 }
