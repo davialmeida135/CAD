@@ -1,24 +1,21 @@
 import pandas as pd
+import seaborn as sns
 import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
+import numpy as np
 
 # Ler arquivo CSV
-df = pd.read_csv("resultado.csv")
+df = pd.read_csv("simulation_results.csv")
 
-# Normalizar cor de acordo com u
-u_min, u_max = df['u'].min(), df['u'].max()
-colors = (df['u'] - u_min) / (u_max - u_min)
-df['deviation'] = df['u'] - 1.0
-colors = df['deviation']
-# Plot 3D
-fig = plt.figure(figsize=(10, 8))
-ax = fig.add_subplot(111, projection='3d')
-sc = ax.scatter(df['i'], df['j'], df['k'], c=colors, cmap='coolwarm')
+sns.set(style="whitegrid")
+# Criar gráfico de dispersão
+plt.figure(figsize=(10, 6))
+sns.lineplot(data=df, x="TimeStep", y="Field_U_Center", palette="deep", alpha=0.7)
+plt.title("Perturbação no centro vs Tempo")
+plt.xlabel("Tempo")
+plt.ylabel("Perturbação no centro")
+# Set ticks for x and y axes to show every number
+plt.yticks(ticks=np.sort(range(0,12)))
 
-# Rótulos e cor
-ax.set_xlabel("i")
-ax.set_ylabel("j")
-ax.set_zlabel("k")
-fig.colorbar(sc, label='u (velocidade)')
-plt.title("Distribuição do campo de velocidades (u) em 3D")
+plt.grid(True)
+plt.savefig("plot.png", dpi=300)
 plt.show()
