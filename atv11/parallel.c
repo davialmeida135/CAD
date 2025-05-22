@@ -51,7 +51,7 @@ float calculate_laplacian_periodic(float *scalar_field_data, int x_coord, int y_
 
 // Function to advance the simulation by one time step for a given scalar field
 void perform_time_step(float *current_field_data, float *next_field_data) {
-    #pragma omp parallel for collapse(3)
+    #pragma omp parallel for schedule(guided,100000) collapse(3)
     for (int ix = 0; ix < GRID_SIZE_X; ix++) {
         for (int iy = 0; iy < GRID_SIZE_Y; iy++) {
             for (int iz = 0; iz < GRID_SIZE_Z; iz++) {

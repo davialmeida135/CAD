@@ -76,7 +76,7 @@ float calculate_max_deviation_from_one(float *scalar_field_data) {
     return max_abs_deviation;
 }
 
-int loop(int num_threads, int load_multiplier) {
+float loop(int num_threads, int load_multiplier) {
     struct timeval start, end, step_start, step_end;
 
     size_t single_field_mem_size = load_multiplier*GRID_SIZE_X * GRID_SIZE_Y * GRID_SIZE_Z * sizeof(float);
@@ -152,18 +152,63 @@ int loop(int num_threads, int load_multiplier) {
     // Cleanup
     free(field_u_current); free(field_u_next);
 
-    return EXIT_SUCCESS;
+    return elapsed;
 }
 
 int main(){
-    int possible_thread_num[] = {1,2,4,8,16,32,64}
-    int possible_load_scale[] = {1,2,4,8,16,32,64}
+    int possible_thread_num[] = {1, 2, 4, 8, 16};
+    int possible_load_scale[] = {1, 2, 4, 8, 16};
+    int num_thread_configs = sizeof(possible_thread_num)/sizeof(possible_thread_num[0]);
+    int num_load_configs = sizeof(possible_load_scale)/sizeof(possible_load_scale[0]);
 
-    for(int t=0;t<8;t++){
-        for(int s=0;s<8;s++){
-            loop(1,1);
-            loop(t,s);
-        }
+    float elapsed;
+    // Lista com os tempos base para cada configuração de carga
+    float base_elapsed_for_load[num_load_configs];
+    float efficiency;
+
+    FILE *csv_file = fopen("efficiency_results.csv", "w");
+    if (csv_file == NULL) {
+        perror("Failed to open efficiency_results.csv");
+        return 1;
     }
 
+    fprintf(csv_file, "LoadScale,Threads,BaseTime(s),ElapsedTime(s),Efficiency\n");
+    printf("-------------------------------------------------------------------\n");
+    printf("| Load Scale | Threads | Base Time (s) | Elapsed Time (s) | Efficiency |\n");
+    printf("|------------|---------|---------------|------------------|------------|\n");
+
+    // Itera sobre as configurações de carga
+    for (int s = 0; s < num_load_configs; s++) {
+        int current_load_scale = possible_load_scale[s];
+        
+        // Executa a simulação com 1 thread para obter o tempo base
+        elapsed = loop(1, current_load_scale);
+        base_elapsed_for_load[s] = elapsed;
+        efficiency = 1.0f;
+
+        fprintf(csv_file, "%d,%d,%.6f,%.6f,%.6f\n",
+                current_load_scale, 1, base_elapsed_for_load[s], elapsed, efficiency);
+        printf("| %10d | %7d | %13.6f | %16.6f | %10.6f |\n",
+               current_load_scale, 1, base_elapsed_for_load[s], elapsed, efficiency);
+
+        // Itera sobre as configurações de threads
+        for (int t = 1; t < num_thread_configs; t++) {
+            int current_num_threads = possible_thread_num[t];
+            elapsed = loop(current_num_threads, current_load_scale);
+            
+            efficiency = base_elapsed_for_load[s] / (elapsed * current_num_threads);
+         
+            fprintf(csv_file, "%d,%d,%.6f,%.6f,%.6f\n",
+                    current_load_scale, current_num_threads, base_elapsed_for_load[s], elapsed, efficiency);
+            printf("| %10d | %7d | %13.6f | %16.6f | %10.6f |\n",
+                   current_load_scale, current_num_threads, base_elapsed_for_load[s], elapsed, efficiency);
+        }
+        printf("|------------|---------|---------------|------------------|------------|\n");
+    }
+    printf("-------------------------------------------------------------------\n");
+
+    fclose(csv_file);
+    printf("\nEfficiency results saved to efficiency_results.csv\n");
+
+    return 0;
 }
