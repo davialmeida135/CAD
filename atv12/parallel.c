@@ -91,7 +91,7 @@ float loop(int num_threads, int load_multiplier) {
     }
     
     // Initialize scalar fields: all points to 1.0f
-    #pragma omp parallel num_threads(num_threads) collapse(3)
+    #pragma omp parallel for num_threads(num_threads) collapse(3)
     for (int ix = 0; ix < load_multiplier*GRID_SIZE_X; ix++) {
         for (int iy = 0; iy < GRID_SIZE_Y; iy++) {
             for (int iz = 0; iz < GRID_SIZE_Z; iz++) {
