@@ -5,9 +5,9 @@
 #include <omp.h>
 
 // --- Configuration Constants ---
-#define GRID_SIZE_X 512        // Number of grid points in X dimension
-#define GRID_SIZE_Y 512         // Number of grid points in Y dimension
-#define GRID_SIZE_Z 512         // Number of grid points in Z dimension
+#define GRID_SIZE_X 128        // Number of grid points in X dimension
+#define GRID_SIZE_Y 128         // Number of grid points in Y dimension
+#define GRID_SIZE_Z 128        // Number of grid points in Z dimension
 #define NUM_TIME_STEPS 5      // Total number of simulation time steps
 #define CELL_SPACING_X 1.0f     // Spatial step size (delta X)
 #define CELL_SPACING_Y 1.0f     // Spatial step size (delta Y)
@@ -156,8 +156,8 @@ float loop(int num_threads, int load_multiplier) {
 }
 
 int main(){
-    int possible_thread_num[] = {1, 2, 4, 8, 16};
-    int possible_load_scale[] = {1, 2, 4, 8, 16};
+    int possible_thread_num[] = {1, 2, 4, 8, 16, 32, 64};
+    int possible_load_scale[] = {1, 2, 4, 8, 16, 32 ,64};
     int num_thread_configs = sizeof(possible_thread_num)/sizeof(possible_thread_num[0]);
     int num_load_configs = sizeof(possible_load_scale)/sizeof(possible_load_scale[0]);
 
