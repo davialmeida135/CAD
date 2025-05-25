@@ -57,16 +57,16 @@ void perform_time_step(float *current_field_data, float *next_field_data, int nu
                 int flat_index = MAP_3D_TO_1D_INDEX(ix, iy, iz);
                 float laplacian_at_point = calculate_laplacian_periodic(current_field_data, ix, iy, iz);
                 next_field_data[flat_index] = current_field_data[flat_index] +
-                                           DIFFUSION_COEFFICIENT * TIME_STEP_INCREMENT * laplacian_at_point;
+                                            DIFFUSION_COEFFICIENT * TIME_STEP_INCREMENT * laplacian_at_point;
             }
         }
     }
 }
 
 // Function to calculate the maximum deviation of a field from a reference value (1.0f)
-float calculate_max_deviation_from_one(float *scalar_field_data) {
+float calculate_max_deviation_from_one(float *scalar_field_data, int load_multiplier) {
     float max_abs_deviation = 0.0f;
-    int total_grid_points = GRID_SIZE_X * GRID_SIZE_Y * GRID_SIZE_Z;
+    int total_grid_points = load_multiplier * GRID_SIZE_X * GRID_SIZE_Y * GRID_SIZE_Z;
     for (int i = 0; i < total_grid_points; i++) {
         float current_deviation = fabsf(scalar_field_data[i] - 1.0f);
         if (current_deviation > max_abs_deviation) {
@@ -138,7 +138,7 @@ float loop(int num_threads, int load_multiplier) {
 
     }
 
-    float final_max_dev_u = calculate_max_deviation_from_one(field_u_current);
+    float final_max_dev_u = calculate_max_deviation_from_one(field_u_current, load_multiplier);
     gettimeofday(&end, NULL);
     long seconds = end.tv_sec - start.tv_sec;
     long microseconds = end.tv_usec - start.tv_usec;
@@ -157,7 +157,7 @@ float loop(int num_threads, int load_multiplier) {
 
 int main(){
     int possible_thread_num[] = {1, 2, 4, 8, 16, 32, 64};
-    int possible_load_scale[] = {1, 2, 4, 8, 16, 32 ,64};
+    int possible_load_scale[] = {1, 2, 4, 8, 16, 32, 64};
     int num_thread_configs = sizeof(possible_thread_num)/sizeof(possible_thread_num[0]);
     int num_load_configs = sizeof(possible_load_scale)/sizeof(possible_load_scale[0]);
 
