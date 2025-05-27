@@ -20,17 +20,17 @@
 #define MAP_3D_TO_1D_INDEX(ix, iy, iz) \
     ((ix) * GRID_SIZE_Y * GRID_SIZE_Z + (iy) * GRID_SIZE_Z + (iz))
 
-float calculate_laplacian_periodic(float *scalar_field_data, int x_coord, int y_coord, int z_coord) {
+float calculate_laplacian_periodic(float *scalar_field_data, int x_coord, int y_coord, int z_coord, int current_grid_size_x) {
 
-    // Calculate neighbor indices with periodic wrap-around
-    int x_plus_1 = (x_coord + 1) % GRID_SIZE_X;
-    int x_minus_1 = (x_coord - 1 + GRID_SIZE_X) % GRID_SIZE_X;
-    int y_plus_1 = (y_coord + 1) % GRID_SIZE_Y;
+    // Calculate neighbor indices with periodic wrap-around using current_grid_size_x
+    int x_plus_1 = (x_coord + 1) % current_grid_size_x;
+    int x_minus_1 = (x_coord - 1 + current_grid_size_x) % current_grid_size_x;
+    int y_plus_1 = (y_coord + 1) % GRID_SIZE_Y; 
     int y_minus_1 = (y_coord - 1 + GRID_SIZE_Y) % GRID_SIZE_Y;
     int z_plus_1 = (z_coord + 1) % GRID_SIZE_Z;
     int z_minus_1 = (z_coord - 1 + GRID_SIZE_Z) % GRID_SIZE_Z;
 
-    // Get values at current point and neighbors
+    // ... rest of the function remains the same ...
     float val_center = scalar_field_data[MAP_3D_TO_1D_INDEX(x_coord, y_coord, z_coord)];
     float val_x_plus_1 = scalar_field_data[MAP_3D_TO_1D_INDEX(x_plus_1, y_coord, z_coord)];
     float val_x_minus_1 = scalar_field_data[MAP_3D_TO_1D_INDEX(x_minus_1, y_coord, z_coord)];
