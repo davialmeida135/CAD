@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#define NUM_EXCHANGES 10000
+#define NUM_EXCHANGES 5
 #define MESSAGE_CONTENT 42
 
 int main(int argc, char** argv) {
@@ -13,15 +13,15 @@ int main(int argc, char** argv) {
     int world_size;
     MPI_Comm_size(MPI_COMM_WORLD, &world_size);
 
-    printf("Lista de processos: %d", world_rank);
-    printf("Tamanho da lista: %d", world_size);
+    printf("Numero do processo: %d\n", world_rank);
+    printf("Tamanho da lista: %d\n", world_size);
 
     if (world_size < 2) {
         fprintf(stderr, "Este programa deve ser executado com pelo menos 2 processos.\n");
         MPI_Abort(MPI_COMM_WORLD, 1);
     }
 
-    int message;
+    int message = 55;
     double start_time, end_time, total_time;
 
     // Sincroniza os processos antes de iniciar o temporizador
@@ -35,9 +35,12 @@ int main(int argc, char** argv) {
     for (int i = 0; i < NUM_EXCHANGES; ++i) {
         if (world_rank == 0) {
             // O processo 0 envia a mensagem para o processo 1
+            printf("Mensagem de tamanho %ld enviado pelo processo %d para o processo %d",sizeof(message),world_rank,1);
             MPI_Send(&message, 1, MPI_INT, 1, 0, MPI_COMM_WORLD);
+
             // O processo 0 recebe a mensagem de volta do processo 1
             MPI_Recv(&message, 1, MPI_INT, 1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+            printf("Mensagem de tamanho %ld recebido pelo processo %d do processo %d",sizeof(message),world_rank,1);
 
         } else if (world_rank == 1) {
             // O processo 1 recebe a mensagem do processo 0
@@ -63,3 +66,5 @@ int main(int argc, char** argv) {
 
     return 0;
 }
+//mpicc message.c -o message
+//mpirun ./message --allow-run-as-root
