@@ -3,14 +3,14 @@
 #include <stdlib.h>
 #include <string.h> 
 
-#define MESSAGE_SIZE 1024 * 1024// Exemplo: 1 KB = 1024
-
+// Exemplo: 1 KB = 1024
+#define MESSAGE_SIZE 1024*1024*24
 
 int main(int argc, char *argv[]) {
     int rank, size;
 
-    char message_sent[MESSAGE_SIZE];
-    char message_received[MESSAGE_SIZE];
+    char *message_sent = NULL;     // Ponteiro para o buffer de envio
+    char *message_received = NULL; // Ponteiro para o buffer de recebimento
     MPI_Status status;
     double start_time, end_time, total_time;
 
@@ -36,12 +36,28 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
-    // Fill mensagem com letras
-    for (int i = 0; i < MESSAGE_SIZE; i++) {
-        message_sent[i] = 'A' + (i % 26); // Preenche com A-Z repetidamente
+    // Alocação dinâmica dos buffers de mensagem
+    message_sent = (char *)malloc(MESSAGE_SIZE);
+    message_received = (char *)malloc(MESSAGE_SIZE);
+
+    if (message_sent == NULL || message_received == NULL) {
+        fprintf(stderr, "Rank %d: Falha ao alocar buffers de %d bytes.\n", rank, MESSAGE_SIZE);
+        perror("Detalhe do erro de malloc");
+        MPI_Abort(MPI_COMM_WORLD, 1); // Aborta todos os processos MPI
+        // Não é necessário 'return 1;' aqui pois MPI_Abort já termina.
     }
 
+    // O comprimento da mensagem é o MESSAGE_SIZE completo
     int message_length = MESSAGE_SIZE;
+
+    // Fill mensagem com letras (APÓS alocação bem-sucedida)
+    if (rank == 0) { // Apenas o processo 0 precisa preencher o buffer que ele envia
+        for (int i = 0; i < MESSAGE_SIZE; i++) {
+            message_sent[i] = 'A' + (i % 26); // Preenche com A-Z repetidamente
+        }
+    }
+
+
     MPI_Barrier(MPI_COMM_WORLD); // Sincroniza os processos antes de iniciar o timer
 
     if (rank == 0) {
@@ -51,6 +67,7 @@ int main(int argc, char *argv[]) {
 
         for (int i = 0; i < num_exchanges; i++) {
             // 1. Processo 0 envia para o processo 1
+            // |mensagem|tamanho|tipo|pra quem|id|comm_world|
             MPI_Send(message_sent, message_length, MPI_CHAR, 1, 0, MPI_COMM_WORLD);
 
             // 4. Processo 0 recebe do processo 1
@@ -65,7 +82,7 @@ int main(int argc, char *argv[]) {
         printf("Tempo médio por troca (RTT): %e segundos\n", total_time / num_exchanges);
         if (message_length > 0 && total_time > 0) {
             double total_data_moved_one_way_gb = (double)num_exchanges * message_length / (1024.0*1024.0*1024.0);
-            double effective_bandwidth_gbps = (total_data_moved_one_way_gb * 2) / total_time; // GB/s, *2 para ping-pong
+            double effective_bandwidth_gbps = (total_data_moved_one_way_gb * 2) / total_time; // GB/s, *2 para ida e volta
             printf("Largura de banda efetiva (ping-pong): %.3f GB/s\n", effective_bandwidth_gbps * 8); // Gbps
         }
         printf("--------------------------------------------------\n");
