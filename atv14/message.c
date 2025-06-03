@@ -4,11 +4,11 @@
 #include <string.h> 
 
 // Exemplo: 1 KB = 1024
-#define MESSAGE_SIZE 1024*1024*24
+//#define MESSAGE_SIZE 1024*1024*24
 
 int main(int argc, char *argv[]) {
     int rank, size;
-
+    long MESSAGE_SIZE;
     char *message_sent = NULL;     // Ponteiro para o buffer de envio
     char *message_received = NULL; // Ponteiro para o buffer de recebimento
     MPI_Status status;
@@ -16,11 +16,18 @@ int main(int argc, char *argv[]) {
 
     // Define numero de trocas como 1000 se não for declarado
     int num_exchanges = 1000;
+        // Verifica se o tamanho da mensagem foi passado como argumento
     if (argc > 1) {
-        num_exchanges = atoi(argv[1]);
-        if (num_exchanges <= 0) {
-            num_exchanges = 1000;
+        message_size_bytes = atol(argv[1]); // Usa atol para números maiores
+        if (message_size_bytes <= 0) {
+            fprintf(stderr, "Tamanho da mensagem inválido. Usando o padrão: 1MB\n");
+            message_size_bytes = 1024 * 1024; // Define um padrão, por exemplo 1MB
         }
+    } else {
+        // Se nenhum tamanho de mensagem for fornecido, usa um padrão ou sai com erro
+        fprintf(stderr, "Uso: %s [num_exchanges] <message_size_bytes>\n", argv[0]);
+        fprintf(stderr, "Definindo tamanho da mensagem padrão para 1MB.\n");
+        message_size_bytes = 1024 * 1024; // Define um padrão, por exemplo 1MB
     }
 
     MPI_Init(&argc, &argv);
