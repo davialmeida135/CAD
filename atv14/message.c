@@ -18,16 +18,16 @@ int main(int argc, char *argv[]) {
     int num_exchanges = 1000;
         // Verifica se o tamanho da mensagem foi passado como argumento
     if (argc > 1) {
-        message_size_bytes = atol(argv[1]); // Usa atol para números maiores
-        if (message_size_bytes <= 0) {
+        MESSAGE_SIZE = atol(argv[1]); // Usa atol para números maiores
+        if (MESSAGE_SIZE <= 0) {
             fprintf(stderr, "Tamanho da mensagem inválido. Usando o padrão: 1MB\n");
-            message_size_bytes = 1024 * 1024; // Define um padrão, por exemplo 1MB
+            MESSAGE_SIZE = 1024 * 1024; // Define um padrão, por exemplo 1MB
         }
     } else {
         // Se nenhum tamanho de mensagem for fornecido, usa um padrão ou sai com erro
         fprintf(stderr, "Uso: %s [num_exchanges] <message_size_bytes>\n", argv[0]);
         fprintf(stderr, "Definindo tamanho da mensagem padrão para 1MB.\n");
-        message_size_bytes = 1024 * 1024; // Define um padrão, por exemplo 1MB
+        MESSAGE_SIZE = 1024 * 1024; // Define um padrão, por exemplo 1MB
     }
 
     MPI_Init(&argc, &argv);
