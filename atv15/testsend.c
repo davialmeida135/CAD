@@ -44,17 +44,18 @@ void initialize_data(double* local_u_current, int local_n, int global_offset, do
     }
 }
 
-// Versão MODIFICADA: Simulação com MPI_Isend/MPI_Irecv e um loop de MPI_Wait
-void run_simulation_nonblocking_individual_waits(double* u_curr, double* u_next,
-                                                 int local_n, int rank, int mpi_size,
-                                                 int num_steps, double factor) {
-    MPI_Request requests[4]; // 2 envios e 2 recebimentos por processo
+// NOVA Versão: Simulação com MPI_Isend/MPI_Irecv, cálculo de pontos internos, e MPI_Testall
+void run_simulation_nonblocking_test_overlap(double* u_curr, double* u_next,
+                                             int local_n, int rank, int mpi_size,
+                                             int num_steps, double factor) {
+    MPI_Request requests[4]; // Máximo 2 envios e 2 recebimentos por processo
     int num_reqs;
+    int all_communications_done;
 
     for (int t = 0; t < num_steps; ++t) {
-        num_reqs = 0; // Reseta o contador de requisições para cada passo de tempo
+        num_reqs = 0;
 
-        // 1. Iniciar todos os MPI_Irecv
+        // 1. Iniciar todas as comunicações não bloqueantes (envios e recebimentos)
         // Receber do vizinho da esquerda (se existir) -> preenche u_curr[0]
         if (rank > 0) {
             MPI_Irecv(&u_curr[0], 1, MPI_DOUBLE, rank - 1, TAG_DATA_GOES_RIGHT,
@@ -65,8 +66,6 @@ void run_simulation_nonblocking_individual_waits(double* u_curr, double* u_next,
             MPI_Irecv(&u_curr[local_n + 1], 1, MPI_DOUBLE, rank + 1, TAG_DATA_GOES_LEFT,
                       MPI_COMM_WORLD, &requests[num_reqs++]);
         }
-
-        // 2. Iniciar todos os MPI_Isend
         // Enviar para o vizinho da direita (se existir) o ponto u_curr[local_n]
         if (rank < mpi_size - 1) {
             MPI_Isend(&u_curr[local_n], 1, MPI_DOUBLE, rank + 1, TAG_DATA_GOES_RIGHT,
@@ -78,24 +77,49 @@ void run_simulation_nonblocking_individual_waits(double* u_curr, double* u_next,
                       MPI_COMM_WORLD, &requests[num_reqs++]);
         }
 
-        // 3. Esperar que todas as comunicações não bloqueantes completem usando MPI_Wait individualmente
+        // 2. Calcular pontos internos (que não dependem das células fantasmas desta iteração)
+        // Estes são os pontos de índice local i de 2 a local_n-1.
+        // Este loop só executa se local_n >= 3.
+        for (int i = 2; i <= local_n - 1; ++i) {
+            u_next[i] = u_curr[i] + factor * (u_curr[i - 1] - 2.0 * u_curr[i] + u_curr[i + 1]);
+        }
+
+        // 3. Esperar/Testar a conclusão das comunicações das células fantasmas
         if (num_reqs > 0) {
-            for (int i = 0; i < num_reqs; i++) {
-                // Para cada requisição no array 'requests', esperamos sua conclusão.
-                MPI_Wait(&requests[i], MPI_STATUS_IGNORE); 
+            all_communications_done = 0;
+            while (!all_communications_done) {
+                MPI_Testall(num_reqs, requests, &all_communications_done, MPI_STATUSES_IGNORE);
             }
         }
 
-        // 4. Computar novos valores de u_next usando os dados de u_curr (agora com bordas atualizadas)
-        for (int i = 1; i <= local_n; ++i) {
-            if (rank == 0 && i == 1) { // Condição de contorno global à esquerda
-                u_next[i] = BC_GLOBAL_LEFT;
-            } else if (rank == mpi_size - 1 && i == local_n) { // Condição de contorno global à direita
-                u_next[i] = BC_GLOBAL_RIGHT;
-            } else { // Pontos internos (usam células fantasmas já recebidas)
-                u_next[i] = u_curr[i] + factor * (u_curr[i - 1] - 2.0 * u_curr[i] + u_curr[i + 1]);
+        // 4. Comunicações concluídas. As células fantasmas u_curr[0] e u_curr[local_n+1] estão atualizadas.
+        //    Calcular os pontos nas bordas do subdomínio local (índices 1 e local_n).
+
+        // Ponto local i=1
+        if (local_n >= 1) { // Se o processo tem pelo menos 1 ponto
+            if (rank == 0) { // Contorno global esquerdo
+                u_next[1] = BC_GLOBAL_LEFT;
+            } else { // Depende da célula fantasma esquerda u_curr[0]
+                     // u_curr[2] é o vizinho interno direito ou, se local_n=1, é a célula fantasma direita.
+                u_next[1] = u_curr[1] + factor * (u_curr[0] - 2.0 * u_curr[1] + u_curr[2]);
             }
         }
+
+        // Ponto local i=local_n
+        // Só calcular se local_n > 1, pois se local_n=1, este ponto já foi tratado e
+        // possivelmente sobrescrito pela condição de contorno.
+        if (local_n > 1) {
+            if (rank == mpi_size - 1) { // Contorno global direito
+                u_next[local_n] = BC_GLOBAL_RIGHT;
+            } else { // Depende da célula fantasma direita u_curr[local_n+1]
+                u_next[local_n] = u_curr[local_n] + factor * (u_curr[local_n - 1] - 2.0 * u_curr[local_n] + u_curr[local_n + 1]);
+            }
+        } else if (local_n == 1 && rank == mpi_size - 1 && rank != 0) {
+            // Caso especial: processo com 1 ponto (local_n=1), é o último processo mas não o primeiro.
+            // Seu único ponto é um contorno global direito, que sobrescreve o cálculo do stencil.
+             u_next[1] = BC_GLOBAL_RIGHT;
+        }
+
 
         // 5. Trocar os ponteiros de u_curr e u_next para a próxima iteração
         double* temp = u_curr;
@@ -133,8 +157,8 @@ int main(int argc, char* argv[]) {
     int local_n, global_offset;
     calculate_local_params(rank, mpi_size, &local_n, &global_offset);
 
-    if (local_n == 0) {
-        MPI_Barrier(MPI_COMM_WORLD);
+    if (local_n == 0) { // Processos sem pontos não participam da simulação principal
+        MPI_Barrier(MPI_COMM_WORLD); // Garante sincronização antes de sair
         MPI_Finalize();
         return 0;
     }
@@ -153,33 +177,36 @@ int main(int argc, char* argv[]) {
         printf("---------------------------------------------------\n");
     }
 
-    double* u_curr_nb_loop_wait = (double*)malloc((local_n + 2) * sizeof(double));
-    double* u_next_nb_loop_wait = (double*)malloc((local_n + 2) * sizeof(double));
+    // Alocação para a versão com MPI_Test e sobreposição
+    double* u_curr_overlap = (double*)malloc((local_n + 2) * sizeof(double));
+    double* u_next_overlap = (double*)malloc((local_n + 2) * sizeof(double));
 
-    if (!u_curr_nb_loop_wait || !u_next_nb_loop_wait) {
-        fprintf(stderr, "Rank %d: Falha na alocação de memória.\n", rank);
+    if (!u_curr_overlap || !u_next_overlap) {
+        fprintf(stderr, "Rank %d: Falha na alocação de memória para a versão de sobreposição.\n", rank);
         MPI_Abort(MPI_COMM_WORLD, 1);
     }
 
     double time_start, time_end, exec_time;
 
-    initialize_data(u_curr_nb_loop_wait, local_n, global_offset, dx);
-    MPI_Barrier(MPI_COMM_WORLD);
+    // Executando e cronometrando a nova versão com MPI_Test e sobreposição
+    initialize_data(u_curr_overlap, local_n, global_offset, dx);
+    MPI_Barrier(MPI_COMM_WORLD); // Sincronizar antes de medir o tempo
     time_start = MPI_Wtime();
 
-    // Chamando a função com loop de MPI_Wait
-    run_simulation_nonblocking_individual_waits(u_curr_nb_loop_wait, u_next_nb_loop_wait, local_n, rank, mpi_size, num_steps, stability_param);
+    // Chamando a NOVA função
+    run_simulation_nonblocking_test_overlap(u_curr_overlap, u_next_overlap, local_n, rank, mpi_size, num_steps, stability_param);
 
-    MPI_Barrier(MPI_COMM_WORLD);
+    MPI_Barrier(MPI_COMM_WORLD); // Sincronizar após a execução para garantir que todos terminaram
     time_end = MPI_Wtime();
     exec_time = time_end - time_start;
 
     if (rank == 0) {
-        printf("Tempo de execução (Versão MPI_Isend/Irecv + loop de MPI_Wait): %f segundos\n", exec_time);
+        printf("Tempo de execução (Versão MPI_Test + Sobreposição): %f segundos\n", exec_time);
     }
 
-    free(u_curr_nb_loop_wait);
-    free(u_next_nb_loop_wait);
+    // Liberar memória
+    free(u_curr_overlap);
+    free(u_next_overlap);
 
     MPI_Finalize();
     return 0;
