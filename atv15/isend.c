@@ -78,6 +78,11 @@ void run_simulation_nonblocking_individual_waits(double* u_curr, double* u_next,
                       MPI_COMM_WORLD, &requests[num_reqs++]);
         }
 
+        // 2. Calcular pontos internos (que não dependem das células fantasmas desta iteração)
+        for (int i = 2; i <= local_n - 1; ++i) {
+            u_next[i] = u_curr[i] + factor * (u_curr[i - 1] - 2.0 * u_curr[i] + u_curr[i + 1]);
+        }
+
         // 3. Esperar que todas as comunicações não bloqueantes completem usando MPI_Wait individualmente
         if (num_reqs > 0) {
             for (int i = 0; i < num_reqs; i++) {
@@ -85,17 +90,41 @@ void run_simulation_nonblocking_individual_waits(double* u_curr, double* u_next,
                 MPI_Wait(&requests[i], MPI_STATUS_IGNORE); 
             }
         }
-
-        // 4. Computar novos valores de u_next usando os dados de u_curr (agora com bordas atualizadas)
-        for (int i = 1; i <= local_n; ++i) {
-            if (rank == 0 && i == 1) { // Condição de contorno global à esquerda
-                u_next[i] = BC_GLOBAL_LEFT;
-            } else if (rank == mpi_size - 1 && i == local_n) { // Condição de contorno global à direita
-                u_next[i] = BC_GLOBAL_RIGHT;
-            } else { // Pontos internos (usam células fantasmas já recebidas)
-                u_next[i] = u_curr[i] + factor * (u_curr[i - 1] - 2.0 * u_curr[i] + u_curr[i + 1]);
+        // 4. Comunicações concluídas. As células fantasmas u_curr[0] e u_curr[local_n+1] estão atualizadas.
+        if (local_n >= 1) { // Se o processo tem pelo menos 1 ponto
+            if (rank == 0) { // Contorno global esquerdo
+                u_next[1] = BC_GLOBAL_LEFT;
+            } else { // Depende da célula fantasma esquerda u_curr[0]
+                     // u_curr[2] é o vizinho interno direito ou, se local_n=1, é a célula fantasma direita.
+                u_next[1] = u_curr[1] + factor * (u_curr[0] - 2.0 * u_curr[1] + u_curr[2]);
             }
         }
+
+        // Ponto local i=local_n
+        // Só calcular se local_n > 1, pois se local_n=1, este ponto já foi tratado e
+        // possivelmente sobrescrito pela condição de contorno.
+        if (local_n > 1) {
+            if (rank == mpi_size - 1) { // Contorno global direito
+                u_next[local_n] = BC_GLOBAL_RIGHT;
+            } else { // Depende da célula fantasma direita u_curr[local_n+1]
+                u_next[local_n] = u_curr[local_n] + factor * (u_curr[local_n - 1] - 2.0 * u_curr[local_n] + u_curr[local_n + 1]);
+            }
+        } else if (local_n == 1 && rank == mpi_size - 1 && rank != 0) {
+            // Caso especial: processo com 1 ponto (local_n=1), é o último processo mas não o primeiro.
+            // Seu único ponto é um contorno global direito, que sobrescreve o cálculo do stencil.
+             u_next[1] = BC_GLOBAL_RIGHT;
+        }
+
+        // 4. Computar novos valores de u_next usando os dados de u_curr (agora com bordas atualizadas)
+        // for (int i = 1; i <= local_n; ++i) {
+        //     if (rank == 0 && i == 1) { // Condição de contorno global à esquerda
+        //         u_next[i] = BC_GLOBAL_LEFT;
+        //     } else if (rank == mpi_size - 1 && i == local_n) { // Condição de contorno global à direita
+        //         u_next[i] = BC_GLOBAL_RIGHT;
+        //     } else { // Pontos internos (usam células fantasmas já recebidas)
+        //         u_next[i] = u_curr[i] + factor * (u_curr[i - 1] - 2.0 * u_curr[i] + u_curr[i + 1]);
+        //     }
+        // }
 
         // 5. Trocar os ponteiros de u_curr e u_next para a próxima iteração
         double* temp = u_curr;

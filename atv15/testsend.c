@@ -76,14 +76,10 @@ void run_simulation_nonblocking_test_overlap(double* u_curr, double* u_next,
             MPI_Isend(&u_curr[1], 1, MPI_DOUBLE, rank - 1, TAG_DATA_GOES_LEFT,
                       MPI_COMM_WORLD, &requests[num_reqs++]);
         }
-
         // 2. Calcular pontos internos (que não dependem das células fantasmas desta iteração)
-        // Estes são os pontos de índice local i de 2 a local_n-1.
-        // Este loop só executa se local_n >= 3.
         for (int i = 2; i <= local_n - 1; ++i) {
             u_next[i] = u_curr[i] + factor * (u_curr[i - 1] - 2.0 * u_curr[i] + u_curr[i + 1]);
         }
-
         // 3. Esperar/Testar a conclusão das comunicações das células fantasmas
         if (num_reqs > 0) {
             all_communications_done = 0;
@@ -91,11 +87,7 @@ void run_simulation_nonblocking_test_overlap(double* u_curr, double* u_next,
                 MPI_Testall(num_reqs, requests, &all_communications_done, MPI_STATUSES_IGNORE);
             }
         }
-
         // 4. Comunicações concluídas. As células fantasmas u_curr[0] e u_curr[local_n+1] estão atualizadas.
-        //    Calcular os pontos nas bordas do subdomínio local (índices 1 e local_n).
-
-        // Ponto local i=1
         if (local_n >= 1) { // Se o processo tem pelo menos 1 ponto
             if (rank == 0) { // Contorno global esquerdo
                 u_next[1] = BC_GLOBAL_LEFT;
