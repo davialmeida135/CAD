@@ -5,114 +5,152 @@
 
 int main(int argc, char *argv[]) {
     int rank, size;
-    int M, N;
-    double *A = NULL, *x = NULL, *y = NULL;
-    double *local_A, *local_y;
-    int rows_per_proc;
-    double start_time, end_time, local_start_time, local_end_time;
-    double computation_time, communication_time, total_time;
-    double local_computation_start, local_computation_end, local_communication_start, local_communication_end;
-
     MPI_Init(&argc, &argv);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-    if (rank == 0) {
-        // Usando valores fixos para M e N para simplicidade
-        M = 10000;
-        N = 10000;
-        printf("Executando com Matriz A(%d x %d) e Vetor x(%d)\n", M, N, N);
+    // Define the matrix dimensions to test (M=N=current_dim)
+    int test_dimensions[] = {1000, 2000, 4000, 8000, 10000, 20000, 50000}; // Example sizes, ensure they are divisible by 'size' or adjust skip logic
+    int num_test_dimensions = sizeof(test_dimensions) / sizeof(test_dimensions[0]);
 
-        if (M % size != 0) {
-            fprintf(stderr, "Erro: O número de linhas (M) deve ser divisível pelo número de processos.\n");
+    if (rank == 0) {
+        printf("Testing on %d MPI processes.\n", size);
+        printf("---------------------------------------------------------------------\n");
+        printf("Matrix Dim | Comp Time (s) | Comm Time (s) | Total Time (s) (Rank 0)\n");
+        printf("---------------------------------------------------------------------\n");
+    }
+
+    for (int k = 0; k < num_test_dimensions; ++k) {
+        int current_dim = test_dimensions[k];
+        int M_dim, N_dim; // M_dim and N_dim will be set to current_dim
+
+        double *A_glob = NULL, *x_glob = NULL, *y_glob = NULL;
+        double *local_A, *local_y;
+        int rows_per_proc;
+        int skip_this_iteration = 0;
+
+        double iter_start_time, iter_end_time;
+        double iter_computation_time = 0.0, iter_communication_time = 0.0, iter_total_time = 0.0;
+        double t_op_start, t_op_end;
+
+        if (rank == 0) {
+            M_dim = current_dim;
+            N_dim = current_dim;
+            if (M_dim % size != 0) {
+                fprintf(stderr, "Info: Dimension %d is not divisible by %d processes. Skipping this dimension.\n", M_dim, size);
+                skip_this_iteration = 1;
+            }
+        }
+
+        // Broadcast M_dim, N_dim, and the skip_this_iteration flag from rank 0
+        MPI_Bcast(&M_dim, 1, MPI_INT, 0, MPI_COMM_WORLD);
+        MPI_Bcast(&N_dim, 1, MPI_INT, 0, MPI_COMM_WORLD);
+        MPI_Bcast(&skip_this_iteration, 1, MPI_INT, 0, MPI_COMM_WORLD);
+
+        if (skip_this_iteration) {
+            if (rank == 0) {
+                printf("%-10d | SKIPPED       | SKIPPED       | SKIPPED\n", current_dim);
+            }
+            MPI_Barrier(MPI_COMM_WORLD); // Ensure all ranks acknowledge skip before continuing
+            continue; // All processes skip to the next dimension
+        }
+
+        // If not skipping, proceed with allocations and computations
+        rows_per_proc = M_dim / size;
+
+        if (rank == 0) {
+            A_glob = (double*)malloc((long)M_dim * N_dim * sizeof(double));
+            x_glob = (double*)malloc((long)N_dim * sizeof(double));
+            y_glob = (double*)malloc((long)M_dim * sizeof(double));
+
+            if (!A_glob || !x_glob || !y_glob) {
+                perror("Failed to allocate global matrices/vectors on rank 0");
+                MPI_Abort(MPI_COMM_WORLD, 1);
+            }
+
+            srand(time(NULL) + current_dim); // Vary seed for different dimensions
+            for (long i = 0; i < (long)M_dim * N_dim; i++) A_glob[i] = (double)rand() / RAND_MAX;
+            for (long i = 0; i < N_dim; i++) x_glob[i] = (double)rand() / RAND_MAX;
+        } else {
+            // Other ranks only need to allocate x_glob to receive the broadcast
+            x_glob = (double*)malloc((long)N_dim * sizeof(double));
+            if (!x_glob) {
+                perror("Failed to allocate x_glob on non-zero rank");
+                MPI_Abort(MPI_COMM_WORLD, 1);
+            }
+        }
+
+        local_A = (double*)malloc((long)rows_per_proc * N_dim * sizeof(double));
+        local_y = (double*)malloc((long)rows_per_proc * sizeof(double));
+        if (!local_A || !local_y) {
+            perror("Failed to allocate local matrices/vectors");
             MPI_Abort(MPI_COMM_WORLD, 1);
         }
+        
+        MPI_Barrier(MPI_COMM_WORLD); // Synchronize before starting the timer for the iteration
+        iter_start_time = MPI_Wtime();
 
-        A = (double*)malloc(M * N * sizeof(double));
-        x = (double*)malloc(N * sizeof(double));
-        y = (double*)malloc(M * sizeof(double));
+        // Broadcast vector x from rank 0 to all processes
+        t_op_start = MPI_Wtime();
+        MPI_Bcast(x_glob, N_dim, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+        t_op_end = MPI_Wtime();
+        iter_communication_time += t_op_end - t_op_start;
 
-        // Inicializando matriz A e vetor x com valores aleatórios
-        srand(time(NULL));
-        for (int i = 0; i < M * N; i++) A[i] = (double)rand() / RAND_MAX;
-        for (int i = 0; i < N; i++) x[i] = (double)rand() / RAND_MAX;
-    }
-
-    // Barreira para garantir que todos os processos iniciem a medição de tempo juntos
-    MPI_Barrier(MPI_COMM_WORLD);
-    start_time = MPI_Wtime();
-
-    // Envia M e N para todos os processos
-    local_communication_start = MPI_Wtime();
-    MPI_Bcast(&M, 1, MPI_INT, 0, MPI_COMM_WORLD);
-    MPI_Bcast(&N, 1, MPI_INT, 0, MPI_COMM_WORLD);
-    local_communication_end = MPI_Wtime();
-    communication_time = local_communication_end - local_communication_start;
-
-
-    rows_per_proc = M / size;
-    local_A = (double*)malloc(rows_per_proc * N * sizeof(double));
-
-    if(rank != 0) {
-        x = (double*)malloc(N * sizeof(double));
-    }
-
-    // Distribui o vetor x para todos os processos
-    local_communication_start = MPI_Wtime();
-    MPI_Bcast(x, N, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    local_communication_end = MPI_Wtime();
-    communication_time += local_communication_end - local_communication_start;
-
-    // Distribui as linhas da matriz A entre os processos
-    local_communication_start = MPI_Wtime();
-    MPI_Scatter(A, rows_per_proc * N, MPI_DOUBLE, local_A, rows_per_proc * N, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    local_communication_end = MPI_Wtime();
-    communication_time += local_communication_end - local_communication_start;
-
-
-    local_y = (double*)malloc(rows_per_proc * sizeof(double));
-
-    // Cálculo local do produto matriz-vetor
-    local_computation_start = MPI_Wtime();
-    for (int i = 0; i < rows_per_proc; i++) {
-        local_y[i] = 0.0;
-        for (int j = 0; j < N; j++) {
-            local_y[i] += local_A[i * N + j] * x[j];
+        // Scatter matrix A from rank 0 to all processes
+        t_op_start = MPI_Wtime();
+        MPI_Scatter(A_glob, rows_per_proc * N_dim, MPI_DOUBLE, local_A, rows_per_proc * N_dim, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+        t_op_end = MPI_Wtime();
+        iter_communication_time += t_op_end - t_op_start;
+        
+        MPI_Barrier(MPI_COMM_WORLD); // Sync before computation timing
+        t_op_start = MPI_Wtime();
+        // Local computation: local_y = local_A * x_glob
+        for (int i = 0; i < rows_per_proc; i++) {
+            local_y[i] = 0.0;
+            for (int j = 0; j < N_dim; j++) {
+                local_y[i] += local_A[i * N_dim + j] * x_glob[j];
+            }
         }
+        MPI_Barrier(MPI_COMM_WORLD); // Sync after computation timing
+        t_op_end = MPI_Wtime();
+        iter_computation_time = t_op_end - t_op_start;
+
+        // Gather results from all processes to y_glob on rank 0
+        t_op_start = MPI_Wtime();
+        MPI_Gather(local_y, rows_per_proc, MPI_DOUBLE, y_glob, rows_per_proc, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+        t_op_end = MPI_Wtime();
+        iter_communication_time += t_op_end - t_op_start;
+
+        iter_end_time = MPI_Wtime();
+        iter_total_time = iter_end_time - iter_start_time;
+
+        if (rank == 0) {
+            printf("%-10d | %-13.6f | %-13.6f | %-17.6f\n",
+                   current_dim, iter_computation_time, iter_communication_time, iter_total_time);
+            
+            // Optional: verification of results on rank 0
+            // double y0_check = 0.0;
+            // if (M_dim > 0 && N_dim > 0) { // Basic check for y_glob[0]
+            //    for(int j=0; j<N_dim; j++) y0_check += A_glob[j] * x_glob[j]; // A_glob[0*N_dim + j]
+            //    printf("Debug: y_glob[0] (calculated) = %f, y0_check = %f\n", y_glob[0], y0_check);
+            // }
+        }
+
+        // Cleanup for the current iteration
+        if (rank == 0) {
+            free(A_glob);
+            free(y_glob);
+        }
+        free(x_glob); // All ranks allocated and must free x_glob
+        free(local_A);
+        free(local_y);
+        
+        MPI_Barrier(MPI_COMM_WORLD); // Ensure all ranks finished cleanup before next iteration
     }
-    local_computation_end = MPI_Wtime();
-    computation_time = local_computation_end - local_computation_start;
 
-    // Reúne os resultados parciais de y no processo 0
-    local_communication_start = MPI_Wtime();
-    MPI_Gather(local_y, rows_per_proc, MPI_DOUBLE, y, rows_per_proc, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    local_communication_end = MPI_Wtime();
-    communication_time += local_communication_end - local_communication_start;
-
-    end_time = MPI_Wtime();
-    total_time = end_time - start_time;
-
-    // Imprime os tempos de cada processo
-    printf("Processo %d: Tempo de Computação = %f s, Tempo de Comunicação = %f s, Tempo Total = %f s\n",
-           rank, computation_time, communication_time, total_time);
-
-
-    // O processo 0 pode verificar os resultados (opcional)
     if (rank == 0) {
-        printf("\nResultados agregados no processo 0.\n");
-        printf("Tempo total de execução (Processo 0): %f segundos\n", total_time);
-        // Exemplo para verificar o primeiro elemento de y
-        double y0_check = 0.0;
-        for(int j=0; j<N; j++) y0_check += A[j] * x[j];
-            printf("y[0] (calculado) = %f, y[0] (verificação) = %f\n", y[0], y0_check);
-
-        free(A);
-        free(y);
+        printf("---------------------------------------------------------------------\n");
     }
-
-    free(x);
-    free(local_A);
-    free(local_y);
 
     MPI_Finalize();
     return 0;
