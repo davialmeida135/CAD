@@ -134,5 +134,5 @@ Tempos de execução:
 - Programa 3 (mpi_test): 8.710295s
 
 Os resultados mostram que o programa com Send e Receive Bloqueantes foi o com o pior resultado.
-Em seguida, vem o o segundo programa, com ISend, IRecv e Wait, que foi ligeiramente melhor que o primeiro, uma vez que todos os MPI_Isend são iniciados ao mesmo tempo, melhorando o desempenho do programa.
+Em seguida, vem o o segundo programa, com ISend, IRecv e Wait, que foi ligeiramente melhor que o primeiro, uma vez que todos os MPI_Isend são iniciados ao mesmo tempo, melhorando o desempenho do programa. Isso ocorre devido à sobreposição de comunicação.
 O terceiro programa foi o mais rápido de todos, uma vez que, além de inicializar todas as operações de ISend e IRecv ao mesmo tempo, ele faz o processamento dos pontos internos da barra antes de usar MPI_Testall para receber os pontos das extremidades, fazendo uma sobreposição de trabalho.

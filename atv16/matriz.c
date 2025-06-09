@@ -21,7 +21,7 @@ int main(int argc, char *argv[]) {
         // Usando valores fixos para M e N para simplicidade
         M = 10000;
         N = 10000;
-        printf("Executando com Matriz A(%d x %d) e Vetor x(%d)\n", M, N);
+        printf("Executando com Matriz A(%d x %d) e Vetor x(%d)\n", M, N, N);
 
         if (M % size != 0) {
             fprintf(stderr, "Erro: O número de linhas (M) deve ser divisível pelo número de processos.\n");
@@ -102,9 +102,9 @@ int main(int argc, char *argv[]) {
         printf("\nResultados agregados no processo 0.\n");
         printf("Tempo total de execução (Processo 0): %f segundos\n", total_time);
         // Exemplo para verificar o primeiro elemento de y
-        // double y0_check = 0.0;
-        // for(int j=0; j<N; j++) y0_check += A[j] * x[j];
-        // printf("y[0] (calculado) = %f, y[0] (verificação) = %f\n", y[0], y0_check);
+        double y0_check = 0.0;
+        for(int j=0; j<N; j++) y0_check += A[j] * x[j];
+            printf("y[0] (calculado) = %f, y[0] (verificação) = %f\n", y[0], y0_check);
 
         free(A);
         free(y);
