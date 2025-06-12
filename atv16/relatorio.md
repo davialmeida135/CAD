@@ -32,7 +32,7 @@ MPI_Bcast(x_glob, N_dim, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 // |A global|Tamanho da parte|tipo|A local| Tamanho da parte| Tipo|Origem|Cmm world|
 MPI_Scatter(A_glob, rows_per_proc * N_dim, MPI_DOUBLE, local_A, rows_per_proc * N_dim, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 ```
-- Por fim, a computação é feita e a matriz e o vetor resultante é agregado
+- Por fim, a computação é feita e o vetor resultante é agregado
 ```c
 // Local computation: local_y = local_A * x_glob
 for (int i = 0; i < rows_per_proc; i++) {
@@ -45,3 +45,14 @@ for (int i = 0; i < rows_per_proc; i++) {
 MPI_Gather(local_y, rows_per_proc, MPI_DOUBLE, y_glob, rows_per_proc, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
 ```
+
+Após executar com diferentes tamanhos de matriz e quantidades de processo, os resultados foram:
+- Tempo Total (ms)
+
+| Matrix Dim | 2 Procs | 4 Procs | 5 Procs | 8 Procs | 10 Procs |
+|------------|---------|---------|---------|---------|----------|
+| 1000       | 7.390   | 8.553   | 10.485  | 9.490   | 9.070    |
+| 2000       | 20.093  | 23.914  | 28.544  | 25.070  | 20.465   |
+| 4000       | 61.432  | 52.839  | 68.223  | 52.367  | 56.026   |
+| 8000       | 219.335 | 177.636 | 245.484 | 141.496 | 172.138  |
+| 10000      | 332.762 | 252.090 | 296.066 | 229.939 | 313.371  |
