@@ -25,17 +25,41 @@ local_A = (double*)malloc((long)rows_per_proc * N_dim * sizeof(double));
 local_y = (double*)malloc((long)rows_per_proc * sizeof(double));
 ```
 
-- Em seguida, usamos MPI_Type_vector para descrever um padrão para armazenar
+- Em seguida, usamos MPI_Type_vector para descrever um padrão para armazenar as colunas
 
 ```c
 MPI_Datatype column_type, resized_column_type;
 //N de blocos(N de linhas)|Blocklength(colunas/process)|Stride(Tamanho da linha)|Novo Tipo
 MPI_Type_vector(M_dim, cols_per_proc, N_dim, MPI_DOUBLE, &column_type);
-//Extende o datatype (0, cols_per_proc * sizeof(double))
-//É tipo um stride para o scatter
+
+//Reduz o tamanho do bloco para o tamanho que é capturado por cada bloco (0, cols_per_proc * sizeof(double))
+//Segmentation fault se não usar isso
+//Originalmente o 2o objeto começa apenas após o fim do ultimo bloco
 MPI_Type_create_resized(column_type, 0, cols_per_proc * sizeof(double), &resized_column_type);
 MPI_Type_commit(&resized_column_type);
 ```
 
-Após executar com diferentes tamanhos de matriz e quantidades de processo, os resultados foram:
-- Tempo Total (ms)
+- Espalhamos as colunas e os pedaços do vetor x para os processos
+
+```c
+MPI_Scatter(A_glob, 1, resized_column_type, local_A, M_dim * cols_per_proc, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+MPI_Scatter(x_glob, cols_per_proc, MPI_DOUBLE, local_x, cols_per_proc, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+```
+
+- Executamos os cálculos parciais
+```c
+// Cada processo calcula y parcial
+for (int i = 0; i < M_dim; i++) {
+    for (int j = 0; j < cols_per_proc; j++) {
+        local_y[i] += local_A[i * cols_per_proc + j] * local_x[j];
+    }
+}
+```
+
+- Somamos todas as contas parciais por meio de MPI_Reduce
+
+```c
+//Vetor local| Vetor soma| Tamanho| Tipo| Operação| Destino| Comm_world
+MPI_Reduce(local_y, y_glob, M_dim, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+```
+
