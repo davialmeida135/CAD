@@ -9,7 +9,7 @@ int main(int argc, char *argv[]) {
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-    int test_dimensions[] = {1000, 2000, 4000, 8000, 10000, 15000};
+    int test_dimensions[] ={100,400,800,1000};
     int num_test_dimensions = sizeof(test_dimensions) / sizeof(test_dimensions[0]);
 
     if (rank == 0) {
@@ -84,9 +84,9 @@ int main(int argc, char *argv[]) {
 
         // Cada processo calcula y parcial
         for (int i = 0; i < M_dim; i++) {
-        for (int j = 0; j < cols_per_proc; j++) {
-            local_y[i] += local_A[i * cols_per_proc + j] * local_x[j];
-        }
+            for (int j = 0; j < cols_per_proc; j++) {
+                local_y[i] += local_A[i * cols_per_proc + j] * local_x[j];
+            }
         }
 
         MPI_Barrier(MPI_COMM_WORLD);

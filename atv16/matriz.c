@@ -10,7 +10,7 @@ int main(int argc, char *argv[]) {
     MPI_Comm_size(MPI_COMM_WORLD, &size);
 
     // Define the matrix dimensions to test (M=N=current_dim)
-    int test_dimensions[] = {1000, 2000, 4000, 8000, 10000, 15000}; // Example sizes, ensure they are divisible by 'size' or adjust skip logic
+    int test_dimensions[] = {100,400,800,1000}; // Example sizes, ensure they are divisible by 'size' or adjust skip logic
     int num_test_dimensions = sizeof(test_dimensions) / sizeof(test_dimensions[0]);
 
     if (rank == 0) {
