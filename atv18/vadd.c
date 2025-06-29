@@ -10,6 +10,7 @@
 //
 int main()
 {
+    printf("%d",omp_get_num_devices());
 
     float a[N], b[N], c[N], res[N];
     int err=0;
@@ -29,8 +30,6 @@ int main()
    compute_time  = -omp_get_wtime();
    
    // add two vectors
-   #pragma omp target
-   #pragma omp loop
    for (int i=0; i<N; i++){
       c[i] = a[i] + b[i];
    }
