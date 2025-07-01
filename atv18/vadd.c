@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <omp.h>
-#define N 10000000
+#define N 100000000
 #define TOL  0.0000001
 //
 //  This is a simple program to add two vectors
@@ -41,8 +41,15 @@ int main()
     compute_time = -omp_get_wtime();
     
     // add two vectors using GPU offloading
-    #pragma omp target parallel for
+#pragma omp parallel for
     for (int i=0; i<N; i++){
+      if (i == 0) {
+            if (omp_is_initial_device()) {
+                printf("Running on HOST (CPU)\n");
+            } else {
+                printf("Running on DEVICE (GPU)");
+            }
+        }
         c[i] = a[i] + b[i];
     }
 
