@@ -1,7 +1,7 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <omp.h>
-#define N 100000
-#define N 100000000
+#define N 10000000
 #define TOL  0.0000001
 //
 //  This is a simple program to add two vectors
@@ -11,8 +11,12 @@
 //
 int main()
 {
-    printf("Number of devices: %d\n", omp_get_num_devices());
-    float a[N], b[N], c[N], res[N];
+    printf("Number of OpenMP devices: %d\n", omp_get_num_devices());
+
+    float *a   = (float *)malloc(sizeof(float) * N);
+    float *b   = (float *)malloc(sizeof(float) * N);
+    float *c   = (float *)malloc(sizeof(float) * N);
+    float *res = (float *)malloc(sizeof(float) * N);
     int err=0;
 
     double init_time, compute_time, test_time;
@@ -29,7 +33,7 @@ int main()
 
    init_time    +=  omp_get_wtime();
    compute_time  = -omp_get_wtime();
-   
+
    // add two vectors
    #pragma omp target
    #pragma omp loop
@@ -45,16 +49,23 @@ int main()
    for(int i=0;i<N;i++){
       float val = c[i] - res[i];
       val = val*val;
+      printf("Number of OpenMP devices: %d\n", omp_get_num_devices());
       if(val>TOL) err++;
    }
 
    test_time    +=  omp_get_wtime();
-   
+
    printf(" vectors added with %d errors\n",err);
+
+   free(a);
+   free(b);
+   free(c);
+   free(res);
 
    printf("Init time:    %.3fs\n", init_time);
    printf("Compute time: %.3fs\n", compute_time);
    printf("Test time:    %.3fs\n", test_time);
    printf("Total time:   %.3fs\n", init_time + compute_time + test_time);
+
    return 0;
 }
