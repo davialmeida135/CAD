@@ -49,6 +49,7 @@ double l2norm(const int n, const double * restrict u, const int nsteps, const do
 // Main function
 int main(int argc, char *argv[]) {
 
+  printf("Number of devices: %d\n", omp_get_num_devices());
   // Start the total program runtime timer
   double start = omp_get_wtime();
 
@@ -203,7 +204,7 @@ void solve(const int n, const double alpha, const double dx, const double dt, co
     const double r2 = 1.0 - 4.0*r;
     
   //loop que guarda o resultado do passo de tempo em u_tmp
-  #pragma omp target data map(to: u[0:n*n]) map(tofrom: u_tmp[0:n*n])
+  #pragma omp target data map(tofrom: u[0:n*n], u_tmp[0:n*n])
   #pragma omp target
   #pragma omp loop collapse(2)
   for (int i = 0; i < n; ++i) {
