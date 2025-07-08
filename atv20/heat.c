@@ -194,7 +194,7 @@ void zero(const int n, double * restrict u) {
       u[i+j*n] = 0.0;
     }
   }
-
+  #pragma omp target enter data map(to: u[0:n*n]) // Envia u para a GPU
 }
 
 
