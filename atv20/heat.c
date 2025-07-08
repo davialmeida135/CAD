@@ -48,6 +48,7 @@ double l2norm(const int n, const double * restrict u, const int nsteps, const do
 
 // Main function
 int main(int argc, char *argv[]) {
+  printf("Number of devices: %d\n", omp_get_num_devices());
 
   // Start the total program runtime timer
   double start = omp_get_wtime();
