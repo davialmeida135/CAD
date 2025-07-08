@@ -146,6 +146,8 @@ int main(int argc, char *argv[]) {
   // Stop solve timer
   double toc = omp_get_wtime();
 
+  #pragma omp target exit data map(from: u[0:n*n])
+
   // Check the L2-norm of the computed solution
   // against the *known* solution from the MMS scheme
   //
@@ -180,6 +182,7 @@ void initial_value(const int n, const double dx, const double length, double * r
     }
     y += dx; // Physical y position
   }
+  #pragma omp target enter data map(to: u[0:n*n]) // Envia u para a GPU
 }
 
 
@@ -202,8 +205,7 @@ void solve(const int n, const double alpha, const double dx, const double dt, co
     const double r = alpha * dt / (dx * dx);
     const double r2 = 1.0 - 4.0*r;
     
-  //loop que guarda o resultado do passo de tempo em u_tmp
-  #pragma omp target data map(to: u[0:n*n]) map(tofrom: u_tmp[0:n*n])
+  //loop
   #pragma omp target
   #pragma omp loop collapse(2)
   for (int i = 0; i < n; ++i) {
