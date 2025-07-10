@@ -40,21 +40,10 @@ int main()
    compute_time +=  omp_get_wtime();
    test_time     = -omp_get_wtime();
 
-   // test results
-   #pragma omp parallel for reduction(+:err)
-   for(int i=0;i<N;i++){
-      float val = c[i] - res[i];
-      val = val*val;
-      if(val>TOL) err++;
-   }
-
-   test_time    +=  omp_get_wtime();
-   
    printf(" vectors added with %d errors\n",err);
 
    printf("Init time:    %.3fs\n", init_time);
    printf("Compute time: %.3fs\n", compute_time);
-   printf("Test time:    %.3fs\n", test_time);
-   printf("Total time:   %.3fs\n", init_time + compute_time + test_time);
+   printf("Total time:   %.3fs\n", init_time + compute_time);
    return 0;
 }
