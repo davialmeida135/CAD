@@ -9,8 +9,8 @@
 #define L_DOMAIN_Y 1.0               // Comprimento da chapa em Y
 #define T_FINAL_TIME 0.01            // Tempo total de simulação
 #define ALPHA_DIFFUSIVITY 0.01       // Difusividade térmica
-#define N_GLOBAL_X 100               // Número total de pontos em X
-#define N_GLOBAL_Y 100               // Número total de pontos em Y
+#define N_GLOBAL_X 1000               // Número total de pontos em X
+#define N_GLOBAL_Y 1000              // Número total de pontos em Y
 #define CFL_STABILITY_FACTOR 0.2     // Fator CFL para estabilidade 2D (<= 0.25)
 
 // Condições de Contorno Globais
@@ -64,9 +64,14 @@ void run_simulation_2d_heat(double* u_curr, double* u_next, int local_rows, int 
     MPI_Request requests[4]; // 2 envios e 2 recebimentos por processo
     int num_reqs;
 
+    //Não pode ser paralelizado pois próximo passo depende do resultado do passo anterior
+    #pragma omp parallel
+    {
     for (int t = 0; t < num_steps; ++t) {
         num_reqs = 0;
 
+        #pragma omp single
+        {
         // 1. Iniciar todos os MPI_Irecv
         // Receber do processo acima (rank - 1) -> preenche linha fantasma superior
         if (rank > 0) {
@@ -90,7 +95,7 @@ void run_simulation_2d_heat(double* u_curr, double* u_next, int local_rows, int 
             MPI_Isend(&u_curr[map_2d_to_1d(1, 0, N_GLOBAL_X)], N_GLOBAL_X, MPI_DOUBLE, 
                      rank - 1, TAG_DATA_GOES_UP, MPI_COMM_WORLD, &requests[num_reqs++]);
         }
-
+        }
         // 3. Calcular pontos internos (que não dependem das células fantasmas)
         #pragma omp parallel for collapse(2)
         for (int i = 2; i <= local_rows - 1; ++i) {
@@ -180,6 +185,7 @@ void run_simulation_2d_heat(double* u_curr, double* u_next, int local_rows, int 
         u_curr = u_next;
         u_next = temp;
     }
+    }
 }
 
 int main(int argc, char* argv[]) {
@@ -209,7 +215,7 @@ int main(int argc, char* argv[]) {
     double dx = L_DOMAIN_X / (N_GLOBAL_X - 1);
     double dy = L_DOMAIN_Y / (N_GLOBAL_Y - 1);
     double dt = CFL_STABILITY_FACTOR * fmin(dx * dx, dy * dy) / ALPHA_DIFFUSIVITY;
-    int num_steps = (int)(T_FINAL_TIME / dt);
+    int num_steps = 200;
     double factor_x = ALPHA_DIFFUSIVITY * dt / (dx * dx);
     double factor_y = ALPHA_DIFFUSIVITY * dt / (dy * dy);
 
