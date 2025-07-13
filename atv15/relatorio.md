@@ -6,20 +6,6 @@ Para esta atividade, implementamos um programa em MPI que simula a propagação 
 
 Foram implementados 3 programas com diferentes métodos de mensagem MPI. O primeiro programa usou MPI_Send (bloqueante) e MPI_Recv. O segundo programa usa MPI_ISend e MPI_IRecv (não bloqueantes) com MPI_Wait para bloquear até que a informação seja recebida. A terceira implementação também usa MPI_ISend e MPI_IRecv para enviar e indicar intenção de receber, porém usa MPI_Test para receber as informações. 
 
-Todos os códigos foram executados no NPAD da UFRN com o seguinte script de execução:
-```java
-#!/bin/bash
-#SBATCH --job-name=mpi_legal
-#SBATCH --output=saida%j.out
-#SBATCH --error=erro%j.err
-#SBATCH --partition=amd-512
-#SBATCH --nodes=3
-#SBATCH --ntasks-per-node=1
-#SBATCH --time=0-0:5
-
-mpirun -np 3 isend
-```
-
 O código da versão usando send e receive bloqueantes foi:
 ```c
 if (rank % 2 == 0) { // Processos pares: Envia e depois recebe

@@ -32,9 +32,10 @@ MPI_Datatype column_type, resized_column_type;
 //N de blocos(N de linhas)|Blocklength(colunas/process)|Stride(Tamanho da linha)|Novo Tipo
 MPI_Type_vector(M_dim, cols_per_proc, N_dim, MPI_DOUBLE, &column_type);
 
-//Reduz o tamanho do bloco para o tamanho que é capturado por cada bloco (0, cols_per_proc * sizeof(double))
+//Reduz o tamanho do bloco para o tamanho que é capturado 
+//por cada bloco (0, cols_per_proc * sizeof(double))
+//Originalmente é a distancia Bloco0 <-> Bloco N
 //Segmentation fault se não usar isso
-//Originalmente o 2o objeto começa apenas após o fim do ultimo bloco
 MPI_Type_create_resized(column_type, 0, cols_per_proc * sizeof(double), &resized_column_type);
 MPI_Type_commit(&resized_column_type);
 ```
@@ -42,8 +43,12 @@ MPI_Type_commit(&resized_column_type);
 - Espalhamos as colunas e os pedaços do vetor x para os processos
 
 ```c
-MPI_Scatter(A_glob, 1, resized_column_type, local_A, M_dim * cols_per_proc, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-MPI_Scatter(x_glob, cols_per_proc, MPI_DOUBLE, local_x, cols_per_proc, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+// Matriz global| 1 | DType | Matriz local |
+// N de elementos recebidos | Tipo | de onde |
+MPI_Scatter(A_glob, 1, resized_column_type, local_A,
+ M_dim * cols_per_proc, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+MPI_Scatter(x_glob, cols_per_proc, MPI_DOUBLE, local_x,
+ cols_per_proc, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 ```
 
 - Executamos os cálculos parciais
@@ -65,8 +70,7 @@ MPI_Reduce(local_y, y_glob, M_dim, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
 
 ## Resultados
 
-Testing on 2 MPI processes (column-wise distribution):
-
+Testing on 2 MPI processes: 
 | N     | Col major time | Row major time |
 |-------|---------------|----------------|
 | 1000  | 0.006251      | 0.007390       |
@@ -75,8 +79,7 @@ Testing on 2 MPI processes (column-wise distribution):
 | 8000  | 0.224108      | 0.219335       |
 | 10000 | 0.347464      | 0.332762       |
 
-Testing on 4 MPI processes (column-wise distribution):
-
+Testing on 4 MPI processes:
 | N     | Col major time | Row major time |
 |-------|---------------|----------------|
 | 1000  | 0.012371      | 0.008553       |
@@ -85,5 +88,4 @@ Testing on 4 MPI processes (column-wise distribution):
 | 8000  | 0.188353      | 0.177636       |
 | 10000 | 0.281764      | 0.252090       |
 
-Os resultados mostram que os tempos foram muito parecidos e, com tamanhos de matriz maiores, o formato Row-major trouxe tempos menores.
-O formato de multiplicação por colunas aumenta muito o número
+Os resultados mostram que os tempos foram muito parecidos e, com tamanhos de matriz maiores, o formato Row-major trouxe tempos melhores. A forma de cálculo por colunas tem implementação mais complexa, mas envia menos dados para os processos, uma vez que apenas um segmento do vetor x é necessário para realizar os cálculos. Além disso, ela requer um acesso à memória que não é contíguo para a montagem do objetos do tipo coluna, diferentemente das linhas da matriz.

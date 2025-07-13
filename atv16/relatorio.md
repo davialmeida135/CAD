@@ -26,11 +26,12 @@ local_y = (double*)malloc((long)rows_per_proc * sizeof(double));
 ```
 - Em seguida, é feito o broadcast do vetor para todos os processos e o espalhamento de partes de mesmo tamanho da matriz.
 ```c
-// Broadcast vetor B
+// Broadcast vetor x
 MPI_Bcast(x_glob, N_dim, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 // Scatter matriz A
 // |A global|Tamanho da parte|tipo|A local| Tamanho da parte| Tipo|Origem|Cmm world|
-MPI_Scatter(A_glob, rows_per_proc * N_dim, MPI_DOUBLE, local_A, rows_per_proc * N_dim, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+MPI_Scatter(A_glob, rows_per_proc * N_dim, MPI_DOUBLE, local_A, rows_per_proc * N_dim,
+ MPI_DOUBLE, 0, MPI_COMM_WORLD);
 ```
 - Por fim, a computação é feita e o vetor resultante é agregado
 ```c
@@ -42,7 +43,8 @@ for (int i = 0; i < rows_per_proc; i++) {
     }
 }
 
-MPI_Gather(local_y, rows_per_proc, MPI_DOUBLE, y_glob, rows_per_proc, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+MPI_Gather(local_y, rows_per_proc, MPI_DOUBLE, y_glob, rows_per_proc,
+ MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
 ```
 
