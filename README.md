@@ -1,8 +1,13 @@
-Repositório das atividades da disciplina de Computação de Alto Desempenho 2025.1
+# Computação de Alto Desempenho
+Repositório das atividades da disciplina de IMD1116 - Computação de Alto Desempenho 2025.1
 
-gcc -fopenmp -o kkkk kkkk.c
+## Compilação com openmp
+gcc -fopenmp -o programa programa.c -lm
 
+## Compilação com MPI
+mpicc -o programa programa.c -lm
 
+## Compilação para programação em GPU no NPAD
 ```bash
 #GPU
 module load compilers/nvidia/nvhpc/24.11
