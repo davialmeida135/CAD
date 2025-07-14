@@ -202,17 +202,15 @@ void zero(const int n, double * restrict u) {
 // Compute the next timestep, given the current timestep
 void solve(const int n, const double alpha, const double dx, const double dt, const double * restrict u, double * restrict u_tmp) {
     
-    // Finite difference constant multiplier
-    const double r = alpha * dt / (dx * dx);
-    const double r2 = 1.0 - 4.0*r;
+  // Finite difference constant multiplier
+  const double r = alpha * dt / (dx * dx);
+  const double r2 = 1.0 - 4.0*r;
     
-  //loop
+  //Inverti j e i para o acesso à memória ser contíguo
   #pragma omp target
   #pragma omp loop collapse(2)
-  for (int i = 0; i < n; ++i) {
-    for (int j = 0; j < n; ++j) {
-      // Update the 5-point stencil, using boundary conditions on the edges of the domain.
-      // Boundaries are zero because the MMS solution is zero there.
+  for (int j = 0; j < n; ++j) {
+      for (int i = 0; i < n; ++i) {
       u_tmp[i+j*n] =  r2 * u[i+j*n] +
       r * ((i < n-1) ? u[i+1+j*n] : 0.0) +
       r * ((i > 0)   ? u[i-1+j*n] : 0.0) +
