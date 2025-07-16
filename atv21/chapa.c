@@ -33,8 +33,8 @@ void calculate_local_params(int rank, int mpi_size, int* local_rows_ptr, int* ro
     }
 }
 
-// Função para mapear coordenadas 2D para índice 1D
-int map_2d_to_1d(int i, int j, int cols) {
+// Adicionar no topo do arquivo
+static inline int map_2d_to_1d(int i, int j, int cols) {
     return i * cols + j;
 }
 
@@ -65,12 +65,10 @@ void run_simulation_2d_heat(double* u_curr, double* u_next, int local_rows, int 
     int num_reqs;
 
     //Não pode ser paralelizado pois próximo passo depende do resultado do passo anterior
-    #pragma omp parallel
     {
     for (int t = 0; t < num_steps; ++t) {
         num_reqs = 0;
 
-        #pragma omp single
         {
         // 1. Iniciar todos os MPI_Irecv
         // Receber do processo acima (rank - 1) -> preenche linha fantasma superior
@@ -122,7 +120,6 @@ void run_simulation_2d_heat(double* u_curr, double* u_next, int local_rows, int 
         // 5. Calcular pontos das bordas que dependem das células fantasmas
         // Primeira linha local (i = 1)
         if (local_rows >= 1) {
-            #pragma omp parallel for
             for (int j = 1; j < N_GLOBAL_X - 1; ++j) {
                 int idx = map_2d_to_1d(1, j, N_GLOBAL_X);
                 
@@ -149,7 +146,6 @@ void run_simulation_2d_heat(double* u_curr, double* u_next, int local_rows, int 
 
         // Última linha local (i = local_rows)
         if (local_rows > 1) {
-            #pragma omp parallel for
             for (int j = 1; j < N_GLOBAL_X - 1; ++j) {
                 int idx = map_2d_to_1d(local_rows, j, N_GLOBAL_X);
                 
