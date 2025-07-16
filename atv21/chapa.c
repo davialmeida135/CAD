@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include <mpi.h>
+#include <omp.h>
 #include <string.h>
 
 // Parâmetros da Simulação 2D
@@ -9,8 +10,8 @@
 #define L_DOMAIN_Y 1.0               // Comprimento da chapa em Y
 #define T_FINAL_TIME 0.01            // Tempo total de simulação
 #define ALPHA_DIFFUSIVITY 0.01       // Difusividade térmica
-#define N_GLOBAL_X 1000               // Número total de pontos em X
-#define N_GLOBAL_Y 1000              // Número total de pontos em Y
+#define N_GLOBAL_X 10000               // Número total de pontos em X
+#define N_GLOBAL_Y 10000              // Número total de pontos em Y
 #define CFL_STABILITY_FACTOR 0.2     // Fator CFL para estabilidade 2D (<= 0.25)
 
 // Condições de Contorno Globais
@@ -65,37 +66,30 @@ void run_simulation_2d_heat(double* u_curr, double* u_next, int local_rows, int 
     int num_reqs;
 
     //Não pode ser paralelizado pois próximo passo depende do resultado do passo anterior
-    {
+    
     for (int t = 0; t < num_steps; ++t) {
         num_reqs = 0;
-
-        {
-        // 1. Iniciar todos os MPI_Irecv
-        // Receber do processo acima (rank - 1) -> preenche linha fantasma superior
+        
+        // 1. Iniciar comunicações não-bloqueantes
         if (rank > 0) {
             MPI_Irecv(&u_curr[map_2d_to_1d(0, 0, N_GLOBAL_X)], N_GLOBAL_X, MPI_DOUBLE, 
                      rank - 1, TAG_DATA_GOES_DOWN, MPI_COMM_WORLD, &requests[num_reqs++]);
         }
-        // Receber do processo abaixo (rank + 1) -> preenche linha fantasma inferior
         if (rank < mpi_size - 1) {
             MPI_Irecv(&u_curr[map_2d_to_1d(local_rows + 1, 0, N_GLOBAL_X)], N_GLOBAL_X, MPI_DOUBLE, 
                      rank + 1, TAG_DATA_GOES_UP, MPI_COMM_WORLD, &requests[num_reqs++]);
         }
-
-        // 2. Iniciar todos os MPI_Isend
-        // Enviar para o processo abaixo a última linha local
         if (rank < mpi_size - 1) {
             MPI_Isend(&u_curr[map_2d_to_1d(local_rows, 0, N_GLOBAL_X)], N_GLOBAL_X, MPI_DOUBLE, 
                      rank + 1, TAG_DATA_GOES_DOWN, MPI_COMM_WORLD, &requests[num_reqs++]);
         }
-        // Enviar para o processo acima a primeira linha local
         if (rank > 0) {
             MPI_Isend(&u_curr[map_2d_to_1d(1, 0, N_GLOBAL_X)], N_GLOBAL_X, MPI_DOUBLE, 
                      rank - 1, TAG_DATA_GOES_UP, MPI_COMM_WORLD, &requests[num_reqs++]);
         }
-        }
-        // 3. Calcular pontos internos (que não dependem das células fantasmas)
-        #pragma omp parallel for collapse(2)
+        
+        // 2. Calcular pontos internos (que não dependem das células fantasmas)
+        #pragma omp parallel for collapse(2) schedule(guided)
         for (int i = 2; i <= local_rows - 1; ++i) {
             for (int j = 1; j < N_GLOBAL_X - 1; ++j) {
                 int idx = map_2d_to_1d(i, j, N_GLOBAL_X);
@@ -110,11 +104,9 @@ void run_simulation_2d_heat(double* u_curr, double* u_next, int local_rows, int 
             }
         }
 
-        // 4. Esperar que todas as comunicações completem
+        // 3. Esperar comunicações
         if (num_reqs > 0) {
-            for (int i = 0; i < num_reqs; i++) {
-                MPI_Wait(&requests[i], MPI_STATUS_IGNORE);
-            }
+            MPI_Waitall(num_reqs, requests, MPI_STATUSES_IGNORE);  // MUDANÇA: usar Waitall
         }
 
         // 5. Calcular pontos das bordas que dependem das células fantasmas
@@ -180,7 +172,6 @@ void run_simulation_2d_heat(double* u_curr, double* u_next, int local_rows, int 
         double* temp = u_curr;
         u_curr = u_next;
         u_next = temp;
-    }
     }
 }
 
