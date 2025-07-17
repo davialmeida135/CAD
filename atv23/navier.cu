@@ -5,9 +5,9 @@
 #include <cuda_runtime.h>
 
 // --- Configuration Constants ---
-#define GRID_SIZE_X 512        // Number of grid points in X dimension
-#define GRID_SIZE_Y 512        // Number of grid points in Y dimension
-#define GRID_SIZE_Z 512        // Number of grid points in Z dimension
+#define GRID_SIZE_X 128        // Number of grid points in X dimension
+#define GRID_SIZE_Y 128        // Number of grid points in Y dimension
+#define GRID_SIZE_Z 128        // Number of grid points in Z dimension
 #define NUM_TIME_STEPS 5      // Total number of simulation time steps
 #define CELL_SPACING_X 1.0f     // Spatial step size (delta X)
 #define CELL_SPACING_Y 1.0f     // Spatial step size (delta Y)
@@ -16,6 +16,9 @@
 #define DIFFUSION_COEFFICIENT 0.1f // Diffusion coefficient (Nu)
 #define PERTURBATION_MAGNITUDE 10.0f // Magnitude of perturbation
 #define RADIUS 1
+#define BLOCK_SIZE_X 8 // Number of threads in X dimension per block
+#define BLOCK_SIZE_Y 8 // Number of threads in Y dimension per block
+#define BLOCK_SIZE_Z 8 // Number of threads in Z dimension per block
 
 // Macro to convert 3D grid coordinates to a 1D array index
 #define MAP_3D_TO_1D_INDEX(x_coord, y_coord, z_coord) ((z_coord) * GRID_SIZE_Y * GRID_SIZE_X + (y_coord) * GRID_SIZE_X + (x_coord))
@@ -23,15 +26,15 @@
 __global__ void update_temperature_field(double* temperature_field_new, double* temperature_field_old, 
     int grid_points_x, int grid_points_y, int grid_points_z, double diffusion_alpha) {
 
-    __shared__ float tile[blockDim.x][blockDim.y][blockDim.z]; // Shared memory tile for block
+    __shared__ float tile[BLOCK_SIZE_X+3*RADIUS][BLOCK_SIZE_Y+3*RADIUS][BLOCK_SIZE_Z+3*RADIUS]; // Shared memory tile for block
     // Calcula as coordenadas 3D da thread atual dentro do grid
     // Cada thread processará um ponto específico da grade 3D
     // Block Idx = posição do bloco no grid
     // Block Dim = número de threads por bloco
     // Thread Idx = posição da thread dentro do bloco
-    int thread_x = blockIdx.x * blockDim.x + threadIdx.x;  // Posição X da thread no grid global
-    int thread_y = blockIdx.y * blockDim.y + threadIdx.y;  // Posição Y da thread no grid global
-    int thread_z = blockIdx.z * blockDim.z + threadIdx.z;  // Posição Z da thread no grid global
+    int thread_x = blockIdx.x * BLOCK_SIZE_X + threadIdx.x;  // Posição X da thread no grid global
+    int thread_y = blockIdx.y * BLOCK_SIZE_Y + threadIdx.y;  // Posição Y da thread no grid global
+    int thread_z = blockIdx.z * BLOCK_SIZE_Z + threadIdx.z;  // Posição Z da thread no grid global
 
     int tile_x = threadIdx.x + RADIUS; // Posição X da thread dentro do bloco
     int tile_y = threadIdx.y + RADIUS; // Posição Y da thread dentro do bloco
@@ -48,37 +51,24 @@ __global__ void update_temperature_field(double* temperature_field_new, double* 
         int current_index = thread_z * grid_points_y * grid_points_x + thread_y * grid_points_x + thread_x;
         
         // Copia pixel central
-        if (tile_x < blockDim.x && tile_y < blockDim.y && tile_z < blockDim.z)
+        if (tile_x < BLOCK_SIZE_X && tile_y < BLOCK_SIZE_Y && tile_z < BLOCK_SIZE_Z)
             tile[tile_z][tile_y][tile_x] = temperature_field_old[current_index];
 
         // Copia vizinhos para a memória compartilhada
-        if (tile_x - 1 >= 0 && tile_x - 1 < blockDim.x && tile_y < blockDim.y && tile_z < blockDim.z)
+        if (tile_x - 1 >= 0 && tile_x - 1 < BLOCK_SIZE_X && tile_y < BLOCK_SIZE_Y && tile_z < BLOCK_SIZE_Z)
             tile[tile_z][tile_y][tile_x - 1] = temperature_field_old[current_index - 1]; // Vizinho à esquerda
-        if (tile_x + 1 < blockDim.x && tile_y < blockDim.y && tile_z < blockDim.z)
+        if (tile_x + 1 < BLOCK_SIZE_X && tile_y < BLOCK_SIZE_Y && tile_z < BLOCK_SIZE_Z)
             tile[tile_z][tile_y][tile_x + 1] = temperature_field_old[current_index + 1]; // Vizinho à direita
-        if (tile_y - 1 >= 0 && tile_x < blockDim.x && tile_z < blockDim.z)
+        if (tile_y - 1 >= 0 && tile_x < BLOCK_SIZE_X && tile_z < BLOCK_SIZE_Z)
             tile[tile_z][tile_y - 1][tile_x] = temperature_field_old[current_index - grid_points_x]; // Vizinho acima
-        if (tile_y + 1 < blockDim.y && tile_x < blockDim.x && tile_z < blockDim.z)
+        if (tile_y + 1 < BLOCK_SIZE_Y && tile_x < BLOCK_SIZE_X && tile_z < BLOCK_SIZE_Z)
             tile[tile_z][tile_y + 1][tile_x] = temperature_field_old[current_index + grid_points_x]; // Vizinho abaixo
-        if (tile_z - 1 >= 0 && tile_x < blockDim.x && tile_y < blockDim.y)
+        if (tile_z - 1 >= 0 && tile_x < BLOCK_SIZE_X && tile_y < BLOCK_SIZE_Y)
             tile[tile_z - 1][tile_y][tile_x] = temperature_field_old[current_index - grid_points_x * grid_points_y]; // Vizinho atrás
-        if (tile_z + 1 < blockDim.z && tile_x < blockDim.x && tile_y < blockDim.y)
+        if (tile_z + 1 < BLOCK_SIZE_Z && tile_x < BLOCK_SIZE_X && tile_y < BLOCK_SIZE_Y)
             tile[tile_z + 1][tile_y][tile_x] = temperature_field_old[current_index + grid_points_x * grid_points_y]; // Vizinho à frente
 
         __syncthreads();
-        
-        // Converte as coordenadas 3D (x,y,z) para índice 1D no array
-        // Fórmula: z*altura*largura + y*largura + x
-        // Isso mapeia a grade 3D para um array linear na memória
-        
-        // Calcula os índices dos 6 vizinhos próximos (norte, sul, leste, oeste, cima, baixo)
-        int neighbor_x_minus = current_index - 1;
-        int neighbor_x_plus = current_index + 1;
-        int neighbor_y_minus = current_index - grid_points_x;
-        int neighbor_y_plus = current_index + grid_points_x;
-        int neighbor_z_minus = current_index - grid_points_x * grid_points_y;
-        int neighbor_z_plus = current_index + grid_points_x * grid_points_y;
-        
         
         // Aplica a equação no tile shared
         temperature_field_new[current_index] = tile[tile_z][tile_y][tile_x] + diffusion_alpha * (
@@ -137,15 +127,14 @@ float run_cuda_simulation(int grid_points_x, int grid_points_y, int grid_points_
     cudaMemcpy(device_temperature_old, host_temperature_initial, memory_size, cudaMemcpyHostToDevice);
     
     // Define 3D block and grid
-    int block_size_x = 8, block_size_y = 8, block_size_z = 8;
-    dim3 threads_per_block(block_size_x, block_size_y, block_size_z);
-    dim3 blocks_per_grid((grid_points_x + block_size_x - 1) / block_size_x, 
-                        (grid_points_y + block_size_y - 1) / block_size_y, 
-                        (grid_points_z + block_size_z - 1) / block_size_z);
+    dim3 threads_per_block(BLOCK_SIZE_X, BLOCK_SIZE_Y, BLOCK_SIZE_Z);
+    dim3 blocks_per_grid((grid_points_x + BLOCK_SIZE_X - 1) / BLOCK_SIZE_X, 
+                        (grid_points_y + BLOCK_SIZE_Y - 1) / BLOCK_SIZE_Y, 
+                        (grid_points_z + BLOCK_SIZE_Z - 1) / BLOCK_SIZE_Z);
     
     printf("Starting CUDA simulation...\n");
     printf("Grid size: %dx%dx%d\n", grid_points_x, grid_points_y, grid_points_z);
-    printf("Block size: %dx%dx%d\n", block_size_x, block_size_y, block_size_z);
+    printf("Block size: %dx%dx%d\n", BLOCK_SIZE_X, BLOCK_SIZE_Y, BLOCK_SIZE_Z);
     printf("Grid dimensions: %dx%dx%d\n", blocks_per_grid.x, blocks_per_grid.y, blocks_per_grid.z);
     
     // Create CUDA events for timing
@@ -196,7 +185,8 @@ float run_cuda_simulation(int grid_points_x, int grid_points_y, int grid_points_
     printf("Total CUDA simulation time: %f seconds\n", elapsed_seconds);
     printf("Final max deviation from 1.0: %.6f\n", final_maximum_deviation);
     printf("Center value: %.6f\n", host_temperature_result[center_point_index]);
-    
+    // Resultado CPU 7.388917
+
     // Cleanup CUDA events
     cudaEventDestroy(simulation_start_event);
     cudaEventDestroy(simulation_stop_event);
