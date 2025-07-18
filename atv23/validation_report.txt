@@ -4,11 +4,11 @@ CUDA Validation Report
 Grid dimensions: 512x512x512
 Total points: 134217728
 Error Metrics:
-Max absolute error: 4.52e+00
-Mean absolute error: 3.03e-02
-RMSE: 1.01e-01
-Correlation: 0.0627603849
+Max absolute error: 1.78e-15
+Mean absolute error: 3.13e-18
+RMSE: 1.87e-17
+Correlation: 1.0000000000
 Performance:
-CPU time: 8.787418 s
-GPU time: 0.085045 s
-Speedup: 103.33x
+CPU time: 2.629803 s
+GPU time: 0.104353 s
+Speedup: 25.20x

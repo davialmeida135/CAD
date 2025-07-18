@@ -26,56 +26,107 @@
 __global__ void update_temperature_field(double* temperature_field_new, double* temperature_field_old, 
     int grid_points_x, int grid_points_y, int grid_points_z, double diffusion_alpha) {
 
-    __shared__ float tile[BLOCK_SIZE_X+2*RADIUS][BLOCK_SIZE_Y+2*RADIUS][BLOCK_SIZE_Z+2*RADIUS]; // Shared memory tile for block
-    // Calcula as coordenadas 3D da thread atual dentro do grid
-    // Cada thread processará um ponto específico da grade 3D
-    // Block Idx = posição do bloco no grid
-    // Block Dim = número de threads por bloco
-    // Thread Idx = posição da thread dentro do bloco
-    int thread_x = blockIdx.x * BLOCK_SIZE_X + threadIdx.x;  // Posição X da thread no grid global
-    int thread_y = blockIdx.y * BLOCK_SIZE_Y + threadIdx.y;  // Posição Y da thread no grid global
-    int thread_z = blockIdx.z * BLOCK_SIZE_Z + threadIdx.z;  // Posição Z da thread no grid global
-
-    int tile_x = threadIdx.x + RADIUS; // Posição X da thread dentro do bloco
-    int tile_y = threadIdx.y + RADIUS; // Posição Y da thread dentro do bloco
-    int tile_z = threadIdx.z + RADIUS; // Posição Z da thread dentro do bloco
-
-    // Verifica se a thread está dentro dos limites válidos da grade
-    // Exclui as bordas (pontos nas extremidades) pois eles não têm todos os vizinhos necessários
-    // Para aplicar o operador de diferenças finitas, precisamos de 6 vizinhos (±X, ±Y, ±Z)
-    if (thread_x > 0 && thread_x < grid_points_x-1 &&     // Não está na borda esquerda/direita
-        thread_y > 0 && thread_y < grid_points_y-1 &&     // Não está na borda frente/trás  
-        thread_z > 0 && thread_z < grid_points_z-1) {     // Não está na borda superior/inferior
+    __shared__ double tile[BLOCK_SIZE_Z + 2*RADIUS][BLOCK_SIZE_Y + 2*RADIUS][BLOCK_SIZE_X + 2*RADIUS];
+    
+    // Coordenadas da thread (e do ponto no espaço)
+    int thread_x = blockIdx.x * blockDim.x + threadIdx.x;
+    int thread_y = blockIdx.y * blockDim.y + threadIdx.y;
+    int thread_z = blockIdx.z * blockDim.z + threadIdx.z;
+    
+    // Posição da thread dentro do bloco
+    int local_x = threadIdx.x;
+    int local_y = threadIdx.y;
+    int local_z = threadIdx.z;
+    
+    // Posição do tile (thread+raio)
+    int tile_x = local_x + RADIUS;
+    int tile_y = local_y + RADIUS;
+    int tile_z = local_z + RADIUS;
+    
+    // Carregar o ponto da thread
+    if (thread_x < grid_points_x && thread_y < grid_points_y && thread_z < grid_points_z) {
+        int global_idx = thread_z * grid_points_y * grid_points_x + thread_y * grid_points_x + thread_x;
+        tile[tile_z][tile_y][tile_x] = temperature_field_old[global_idx];
+    } else {
+        tile[tile_z][tile_y][tile_x] = 1.0;
+    }
+    
+    // Carregar os halos
+    // Eixo X
+    // Apenas a primeira thread de cada dimensão carregam os halos, não a primeira e a ultima
+    if (local_x < RADIUS) {
+        // Da esquerda (posicao - raio)
+        int halo_x = thread_x - RADIUS;
+        if (halo_x >= 0 && thread_y < grid_points_y && thread_z < grid_points_z) {
+            int halo_idx = thread_z * grid_points_y * grid_points_x + thread_y * grid_points_x + halo_x;
+            tile[tile_z][tile_y][local_x] = temperature_field_old[halo_idx];
+        } else {
+            tile[tile_z][tile_y][local_x] = 1.0;
+        }
         
+        // Da dureita (posicao + tamanho)
+        int right_x = thread_x + blockDim.x;
+        if (right_x < grid_points_x && thread_y < grid_points_y && thread_z < grid_points_z) {
+            int right_idx = thread_z * grid_points_y * grid_points_x + thread_y * grid_points_x + right_x;
+            tile[tile_z][tile_y][local_x + blockDim.x + RADIUS] = temperature_field_old[right_idx];
+        } else {
+            tile[tile_z][tile_y][local_x + blockDim.x + RADIUS] = 1.0;
+        }
+    }
+    // Eixo Y
+    if (local_y < RADIUS) {
+        // De frente (posicao - raio)
+        int halo_y = thread_y - RADIUS;
+        if (halo_y >= 0 && thread_x < grid_points_x && thread_z < grid_points_z) {
+            int halo_idx = thread_z * grid_points_y * grid_points_x + halo_y * grid_points_x + thread_x;
+            tile[tile_z][local_y][tile_x] = temperature_field_old[halo_idx];
+        } else {
+            tile[tile_z][local_y][tile_x] = 1.0;
+        }
         
-        int current_index = thread_z * grid_points_y * grid_points_x + thread_y * grid_points_x + thread_x;
+        // De trás (posicao + tamanho)
+        int back_y = thread_y + blockDim.y;
+        if (back_y < grid_points_y && thread_x < grid_points_x && thread_z < grid_points_z) {
+            int back_idx = thread_z * grid_points_y * grid_points_x + back_y * grid_points_x + thread_x;
+            tile[tile_z][local_y + blockDim.y + RADIUS][tile_x] = temperature_field_old[back_idx];
+        } else {
+            tile[tile_z][local_y + blockDim.y + RADIUS][tile_x] = 1.0;
+        }
+    }
+    // Eixo Z
+    if (local_z < RADIUS) {
+        // De cima (posicao - raio)
+        int halo_z = thread_z - RADIUS;
+        if (halo_z >= 0 && thread_x < grid_points_x && thread_y < grid_points_y) {
+            int halo_idx = halo_z * grid_points_y * grid_points_x + thread_y * grid_points_x + thread_x;
+            tile[local_z][tile_y][tile_x] = temperature_field_old[halo_idx];
+        } else {
+            tile[local_z][tile_y][tile_x] = 1.0;
+        }
         
-        // Copia pixel central
-        if (tile_x < BLOCK_SIZE_X && tile_y < BLOCK_SIZE_Y && tile_z < BLOCK_SIZE_Z)
-            tile[tile_z][tile_y][tile_x] = temperature_field_old[current_index];
-
-        // Copia vizinhos para a memória compartilhada
-        if (tile_x - 1 >= 0 && tile_x - 1 < BLOCK_SIZE_X && tile_y < BLOCK_SIZE_Y && tile_z < BLOCK_SIZE_Z)
-            tile[tile_z][tile_y][tile_x - 1] = temperature_field_old[current_index - 1]; // Vizinho à esquerda
-        if (tile_x + 1 < BLOCK_SIZE_X && tile_y < BLOCK_SIZE_Y && tile_z < BLOCK_SIZE_Z)
-            tile[tile_z][tile_y][tile_x + 1] = temperature_field_old[current_index + 1]; // Vizinho à direita
-        if (tile_y - 1 >= 0 && tile_x < BLOCK_SIZE_X && tile_z < BLOCK_SIZE_Z)
-            tile[tile_z][tile_y - 1][tile_x] = temperature_field_old[current_index - grid_points_x]; // Vizinho acima
-        if (tile_y + 1 < BLOCK_SIZE_Y && tile_x < BLOCK_SIZE_X && tile_z < BLOCK_SIZE_Z)
-            tile[tile_z][tile_y + 1][tile_x] = temperature_field_old[current_index + grid_points_x]; // Vizinho abaixo
-        if (tile_z - 1 >= 0 && tile_x < BLOCK_SIZE_X && tile_y < BLOCK_SIZE_Y)
-            tile[tile_z - 1][tile_y][tile_x] = temperature_field_old[current_index - grid_points_x * grid_points_y]; // Vizinho atrás
-        if (tile_z + 1 < BLOCK_SIZE_Z && tile_x < BLOCK_SIZE_X && tile_y < BLOCK_SIZE_Y)
-            tile[tile_z + 1][tile_y][tile_x] = temperature_field_old[current_index + grid_points_x * grid_points_y]; // Vizinho à frente
-
-        __syncthreads();
+        // De baixo (posicao - raio)
+        int top_z = thread_z + blockDim.z;
+        if (top_z < grid_points_z && thread_x < grid_points_x && thread_y < grid_points_y) {
+            int top_idx = top_z * grid_points_y * grid_points_x + thread_y * grid_points_x + thread_x;
+            tile[local_z + blockDim.z + RADIUS][tile_y][tile_x] = temperature_field_old[top_idx];
+        } else {
+            tile[local_z + blockDim.z + RADIUS][tile_y][tile_x] = 1.0;
+        }
+    }
+    __syncthreads();
+    // Calcular somente para pontos internos (nao fazer para os halos)
+    if (thread_x > 0 && thread_x < grid_points_x-1 &&
+        thread_y > 0 && thread_y < grid_points_y-1 &&
+        thread_z > 0 && thread_z < grid_points_z-1) {
         
-        // Aplica a equação no tile shared
-        temperature_field_new[current_index] = tile[tile_z][tile_y][tile_x] + diffusion_alpha * (
-            tile[tile_z][tile_y][tile_x - 1] + tile[tile_z][tile_y][tile_x + 1] +   
-            tile[tile_z][tile_y - 1][tile_x] + tile[tile_z][tile_y + 1][tile_x] +    
-            tile[tile_z - 1][tile_y][tile_x] + tile[tile_z + 1][tile_y][tile_x] -   
-            6 * tile[tile_z][tile_y][tile_x]);                                         
+        int global_idx = thread_z * grid_points_y * grid_points_x + thread_y * grid_points_x + thread_x;
+        
+        double center = tile[tile_z][tile_y][tile_x];
+        double neighbors = tile[tile_z][tile_y][tile_x-1] + tile[tile_z][tile_y][tile_x+1] +  // direita - esquerda
+                          tile[tile_z][tile_y-1][tile_x] + tile[tile_z][tile_y+1][tile_x] +  // cima - baixo  
+                          tile[tile_z-1][tile_y][tile_x] + tile[tile_z+1][tile_y][tile_x];   // frente - trás
+        
+        temperature_field_new[global_idx] = center + diffusion_alpha * (neighbors - 6.0 * center);
     }
 }
 
@@ -202,7 +253,7 @@ float run_cuda_simulation(int grid_points_x, int grid_points_y, int grid_points_
 // Adicione esta função CPU ao seu navier.cu
 void update_temperature_cpu(double* temp_new, double* temp_old, 
                            int nx, int ny, int nz, double alpha) {
-    //#pragma omp parallel for num_threads(16)
+    #pragma omp parallel for num_threads(16)
     for (int z = 1; z < nz - 1; z++) {
         for (int y = 1; y < ny - 1; y++) {
             for (int x = 1; x < nx - 1; x++) {
