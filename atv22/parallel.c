@@ -5,10 +5,10 @@
 #include <omp.h>
 
 // --- Configuration Constants ---
-#define GRID_SIZE_X 128        // Number of grid points in X dimension
-#define GRID_SIZE_Y 128        // Number of grid points in Y dimension
-#define GRID_SIZE_Z 128       // Number of grid points in Z dimension
-#define NUM_TIME_STEPS 5      // Total number of simulation time steps
+#define GRID_SIZE_X 512        // Number of grid points in X dimension
+#define GRID_SIZE_Y 512        // Number of grid points in Y dimension
+#define GRID_SIZE_Z 512       // Number of grid points in Z dimension
+#define NUM_TIME_STEPS 10     // Total number of simulation time steps
 #define CELL_SPACING_X 1.0f     // Spatial step size (delta X)
 #define CELL_SPACING_Y 1.0f     // Spatial step size (delta Y)
 #define CELL_SPACING_Z 1.0f     // Spatial step size (delta Z)

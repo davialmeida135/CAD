@@ -103,8 +103,9 @@ float run_cuda_simulation(int grid_points_x, int grid_points_y, int grid_points_
     double *device_temperature_old, *device_temperature_new;
     cudaMalloc(&device_temperature_old, memory_size);
     cudaMalloc(&device_temperature_new, memory_size);
-    
+
     // Copy initial data to device
+    // Destino, origem, tamanho, direção da cópia
     cudaMemcpy(device_temperature_old, host_temperature_initial, memory_size, cudaMemcpyHostToDevice);
     
     // Define 3D block and grid
@@ -134,17 +135,18 @@ float run_cuda_simulation(int grid_points_x, int grid_points_y, int grid_points_
             device_temperature_new, device_temperature_old, 
             grid_points_x, grid_points_y, grid_points_z, diffusion_alpha);
         
+        // Swap pointers
+        double* temporary_pointer = device_temperature_old;
+        device_temperature_old = device_temperature_new;
+        device_temperature_new = temporary_pointer;
+        
         // Check for kernel launch errors
         cudaError_t kernel_error = cudaGetLastError();
         if (kernel_error != cudaSuccess) {
             printf("CUDA kernel error: %s\n", cudaGetErrorString(kernel_error));
             break;
         }
-        
-        // Swap pointers
-        double* temporary_pointer = device_temperature_old;
-        device_temperature_old = device_temperature_new;
-        device_temperature_new = temporary_pointer;
+            
     }
     
     // Record stop event
